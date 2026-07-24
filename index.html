@@ -742,4 +742,76 @@
     }
     ticking=false;
   }
-  addEventListener('scroll',()=
+  addEventListener('scroll',()=>{if(!ticking){requestAnimationFrame(onScroll);ticking=true;}},{passive:true});
+  onScroll();
+  totop.addEventListener('click',()=>scrollTo({top:0,behavior:'smooth'}));
+
+  /* ---------- stars ---------- */
+  const sc=document.getElementById('stars');for(let i=0;i<28;i++){const s=document.createElement('span');s.className='star';
+    const z=1+Math.random()*3;s.style.width=z+'px';s.style.height=z+'px';s.style.left=Math.random()*100+'%';s.style.top=Math.random()*70+'%';
+    s.style.animationDuration=(2.5+Math.random()*3)+'s';s.style.animationDelay=(Math.random()*4)+'s';sc.appendChild(s);}
+
+  /* ---------- shooting stars ---------- */
+  function shootStar(){
+    if(document.hidden)return schedule();
+    const st=document.createElement('div');st.className='shooting';
+    st.style.left=(Math.random()*45)+'%';st.style.top=(Math.random()*30)+'%';
+    const dur=1.1+Math.random()*0.7;
+    st.style.animation=`shoot ${dur}s ease-out forwards`;
+    sc.appendChild(st);
+    setTimeout(()=>st.remove(),dur*1000+100);
+  }
+  function schedule(){setTimeout(()=>{shootStar();schedule();},2000+Math.random()*2500);}
+  schedule();
+  shootStar();
+
+  /* ---------- loader ---------- */
+  addEventListener('load',()=>setTimeout(()=>document.getElementById('loader').classList.add('done'),1900));
+  setTimeout(()=>document.getElementById('loader').classList.add('done'),2600);
+</script>
+
+<!-- ===== Leaflet map ===== -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(function(){
+  if(typeof L==='undefined'){return;}
+  var cities=[
+    {n:'Roma',   k:'로마 · 1.16–19',  c:'#e07a4f', ll:[41.9028,12.4964]},
+    {n:'Firenze',k:'피렌체 · 1.19–21',c:'#e6b23e', ll:[43.7696,11.2558]},
+    {n:'Venezia',k:'베니스 · 1.21–23',c:'#4bb0d1', ll:[45.4408,12.3155]},
+    {n:'Milano', k:'밀라노 · 1.23–24',c:'#d17aa0', ll:[45.4642, 9.1900]}
+  ];
+  var map=L.map('realmap',{scrollWheelZoom:false,zoomControl:true,attributionControl:true});
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{
+    subdomains:'abcd', maxZoom:19,
+    attribution:'&copy; OpenStreetMap &copy; CARTO'
+  }).addTo(map);
+
+  // route line
+  var line=cities.map(function(c){return c.ll;});
+  L.polyline(line,{color:'#f4c542',weight:3,opacity:.85,dashArray:'2 9',lineCap:'round'}).addTo(map);
+
+  // city markers
+  cities.forEach(function(c,i){
+    var icon=L.divIcon({className:'',iconSize:[30,30],iconAnchor:[15,15],
+      html:'<div class="city-pin" style="width:30px;height:30px;background:'+c.c+'">'+(i+1)+'</div>'});
+    L.marker(c.ll,{icon:icon}).addTo(map)
+     .bindPopup('<div class="pop-t">'+c.n+'</div><div class="pop-s">'+c.k+'</div>');
+  });
+
+  var bounds=L.latLngBounds(line);
+  map.fitBounds(bounds,{padding:[50,50]});
+
+  // fix sizing once the section scrolls into view / loads
+  function fix(){ map.invalidateSize(); map.fitBounds(bounds,{padding:[50,50]}); }
+  addEventListener('load',function(){setTimeout(fix,300);});
+  if('IntersectionObserver' in window){
+    var mo=new IntersectionObserver(function(es){
+      es.forEach(function(e){ if(e.isIntersecting){ fix(); mo.disconnect(); } });
+    },{threshold:.15});
+    mo.observe(document.getElementById('realmap'));
+  }
+})();
+</script>
+</body>
+</html>
