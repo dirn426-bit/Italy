@@ -276,10 +276,14 @@
   .pack-col{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:1.25rem 1.4rem;text-align:left}
   .pack-col h4{font-weight:800;font-size:1rem;color:var(--firenze);margin-bottom:.8rem;display:flex;align-items:center;gap:.5rem}
   .pack-col ul{list-style:none;display:flex;flex-direction:column;gap:.5rem}
-  .pack-col li{font-size:.88rem;color:var(--ink);line-height:1.45;padding-left:1.5rem;position:relative}
-  .pack-col li::before{content:"\2610";position:absolute;left:0;top:-.05em;color:var(--ink-soft);font-size:1.05em}
+  .pack-col li{font-size:.88rem;color:var(--ink);line-height:1.45;padding-left:1.5rem;position:relative;cursor:pointer;user-select:none;transition:color .2s,opacity .2s}
+  .pack-col li::before{content:"\2610";position:absolute;left:0;top:-.05em;color:var(--ink-soft);font-size:1.05em;transition:color .2s}
+  .pack-col li:hover::before{color:var(--firenze)}
+  .pack-col li.done{color:var(--ink-soft);opacity:.55;text-decoration:line-through;text-decoration-color:var(--ink-soft)}
+  .pack-col li.done::before{content:"\2611";color:var(--firenze)}
+  .pack-col li.done b{color:var(--ink-soft);text-decoration:line-through}
   .pack-col li b{color:var(--lemon);font-weight:700}
-  .pack-col li .hint{display:block;font-size:.76rem;color:var(--ink-soft);margin-top:.1rem}
+  .pack-col li .hint{display:block;font-size:.76rem;color:var(--ink-soft);margin-top:.1rem;text-decoration:none}
 
   /* ---------- FOOTER ---------- */
   .foot{position:relative;padding:clamp(90px,14vh,170px) 24px clamp(60px,9vh,90px);text-align:center;
@@ -585,9 +589,9 @@
   const F='<span class="fill">____</span>';
   const legs=[
     ['air','✈','인천 <span class="arr">→</span> 로마 (FCO)','1/16 (토) · KE931 · A350-900 · 직항','ICN T2 14:05 → FCO T3 19:35','13시간 30분 · 39H / '+F],
-    ['train','🚄','로마 Termini <span class="arr">→</span> 피렌체 S.M.N.','1/19 (화) · 프레차로사 약 1시간 30분','예약 '+F,'좌석 '+F],
-    ['train','🚄','피렌체 S.M.N. <span class="arr">→</span> 베니스 Mestre','1/21 (목) · 프레차로사 약 2시간','예약 '+F,'좌석 '+F],
-    ['train','🚄','베니스 Mestre <span class="arr">→</span> 밀라노 Centrale','1/23 (토) · 프레차로사 약 2시간 30분','예약 '+F,'좌석 '+F],
+    ['train','🚄','로마 Termini <span class="arr">→</span> 피렌체 S.M.N.','1/19 (화) · 프레차로사 약 1시간 30분','미예약','10월 초 구매 권장'],
+    ['train','🚄','피렌체 S.M.N. <span class="arr">→</span> 베니스 Mestre','1/21 (목) · 프레차로사 약 2시간','미예약','10월 초 구매 권장'],
+    ['train','🚄','베니스 Mestre <span class="arr">→</span> 밀라노 Centrale','1/23 (토) · 프레차로사 약 2시간 30분','미예약','10월 초 구매 권장'],
     ['transfer','🚇','밀라노 Centrale <span class="arr">→</span> 말펜사 T1','1/24 (일) · 말펜사 익스프레스 약 51분 · €13','15~30분 간격','플랫폼 3'],
     ['air','✈','밀라노 (MXP) <span class="arr">→</span> 인천','1/24 (일) · KE928 · B787-9 · 직항','MXP T1 20:05 → ICN T2 15:35 (+1)','11시간 30분 · 35B / '+F],
   ];
@@ -596,10 +600,10 @@
 
   /* ---------- logistics (hotels + practical) ---------- */
   const logi=[
-    ['🏨','퀴리날레 호텔','로마 · 1/16–19 · 562,342원',[['체크인','15:00'],['체크아웃','12:00 · 짐보관 가능'],['주소','Via Nazionale 7, 00184 Roma'],['위치','레푸블리카역 150m · 조식 포함'],['예약번호',F]]],
-    ['🏨','그랜드 호텔 바글리오니','피렌체 · 1/19–21 · 485,107원',[['체크인','15:00'],['체크아웃','12:00'],['주소','Piazza dell\'Unità Italiana 6, 50123 Firenze'],['위치','S.M.N.역 200m (지하통로 연결)'],['예약번호',F]]],
-    ['🏨','레오나르도 로얄 (메스트레)','베니스 · 1/21–23 · 288,374원',[['체크인','14:00'],['체크아웃','12:00'],['주소','Via Ca\' Marcello 6, 30172 Mestre-Venezia'],['위치','베니스 Mestre역 바로 옆'],['예약번호',F]]],
-    ['🏨','NYX 호텔 밀란','밀라노 · 1/23–24 · 180,716원',[['체크인','15:00'],['체크아웃','11:00 · 짐보관 가능'],['주소','Piazza IV Novembre 3, 20124 Milano'],['위치','밀라노 Centrale역 앞 450m'],['예약번호',F]]],
+    ['🏨','퀴리날레 호텔','로마 · 1/16–19 · 562,342원',[['체크인','15:00'],['체크아웃','12:00 · 짐보관 가능'],['주소','Via Nazionale 7, 00184 Roma'],['위치','레푸블리카역 150m · 조식 포함'],['예약','아고다(Agoda) 예약']]],
+    ['🏨','그랜드 호텔 바글리오니','피렌체 · 1/19–21 · 485,107원',[['체크인','15:00'],['체크아웃','12:00'],['주소','Piazza dell\'Unità Italiana 6, 50123 Firenze'],['위치','S.M.N.역 200m (지하통로 연결)'],['예약','아고다(Agoda) 예약']]],
+    ['🏨','레오나르도 로얄 (메스트레)','베니스 · 1/21–23 · 288,374원',[['체크인','14:00'],['체크아웃','12:00'],['주소','Via Ca\' Marcello 6, 30172 Mestre-Venezia'],['위치','베니스 Mestre역 바로 옆'],['예약','아고다(Agoda) 예약']]],
+    ['🏨','NYX 호텔 밀란','밀라노 · 1/23–24 · 180,716원',[['체크인','15:00'],['체크아웃','11:00 · 짐보관 가능'],['주소','Piazza IV Novembre 3, 20124 Milano'],['위치','밀라노 Centrale역 앞 450m'],['예약','아고다(Agoda) 예약']]],
   ];
   document.getElementById('logiGrid').innerHTML=logi.map(c=>
     `<div class="logi-card reveal"><div class="ct">${c[0]} ${c[1]}</div><div class="cc">${c[2]}</div>${c[3].map(r=>`<div class="row"><span class="rk">${r[0]}</span><span>${r[1]}</span></div>`).join('')}</div>`).join('');
@@ -611,8 +615,25 @@
     ['🔌','전자 · 소품',['<b>C/F형 멀티어댑터</b><span class="hint">220V</span>','보조배터리','유심/이심 또는 로밍','카메라 · 충전기','목베개 (장거리 비행)']],
     ['💊','상비약 · 기타',['소화제 · 지사제 · 진통제','밴드 · 개인약','립밤 · 핸드크림<span class="hint">겨울 건조</span>','물티슈 · 휴지','에코백 (마트·기념품)']],
   ];
-  document.getElementById('packGrid').innerHTML=pack.map(c=>
-    `<div class="pack-col reveal"><h4>${c[0]} ${c[1]}</h4><ul>${c[2].map(i=>`<li>${i}</li>`).join('')}</ul></div>`).join('');
+  document.getElementById('packGrid').innerHTML=pack.map((c,ci)=>
+    `<div class="pack-col reveal"><h4>${c[0]} ${c[1]}</h4><ul>${c[2].map((i,ii)=>`<li data-pk="p${ci}_${ii}">${i}</li>`).join('')}</ul></div>`).join('');
+
+  /* packing check state (persists via localStorage) */
+  (function(){
+    const KEY='italy_pack_v1';
+    let saved={};
+    try{saved=JSON.parse(localStorage.getItem(KEY)||'{}');}catch(e){saved={};}
+    const items=document.querySelectorAll('.pack-col li[data-pk]');
+    items.forEach(li=>{
+      const id=li.dataset.pk;
+      if(saved[id])li.classList.add('done');
+      li.addEventListener('click',()=>{
+        li.classList.toggle('done');
+        saved[id]=li.classList.contains('done');
+        try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(e){}
+      });
+    });
+  })();
 
   /* ---------- nav dots ---------- */
   const secs=[['top','시작','#20303a'],['sec-roma','로마',HEX.roma],['sec-firenze','피렌체',HEX.firenze],['sec-venezia','베니스',HEX.venezia],['sec-milano','밀라노',HEX.milano],['sec-reserve','예약',HEX.venezia],['sec-budget','예산',HEX.firenze],['sec-transit','이동',HEX.venezia],['sec-logi','숙소',HEX.milano],['sec-pack','준비물',HEX.firenze]];
