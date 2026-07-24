@@ -241,6 +241,46 @@
   .bnote .bt-amt::after{content:" ₩";font-size:.5em}
   @media(max-width:560px){.bnote{flex-wrap:wrap}.bnote .bt-amt{margin-left:0;width:100%}}
 
+  /* ---------- TRANSIT (trains + flights) ---------- */
+  .transit{padding:clamp(80px,12vh,140px) 0;background:linear-gradient(180deg,#0c1d31,#0e2036)}
+  .transit .kicker{color:var(--venezia)}
+  .leg-grid{max-width:820px;margin:2.6rem auto 0;display:flex;flex-direction:column;gap:1rem}
+  .leg{display:grid;grid-template-columns:auto 1fr auto;gap:.35rem 1.1rem;align-items:center;
+    background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:1.15rem 1.35rem;text-align:left}
+  .leg .ico{font-size:1.5rem;grid-row:span 2}
+  .leg .route{font-weight:800;font-size:clamp(15px,3vw,18px);letter-spacing:-.01em}
+  .leg .route .arr{color:var(--venezia);margin:0 .4em;font-weight:700}
+  .leg .sub{font-size:.82rem;color:var(--ink-soft);grid-column:2}
+  .leg .meta{grid-column:3;grid-row:span 2;text-align:right;font-size:.8rem;color:var(--ink-soft);line-height:1.5;white-space:nowrap}
+  .leg .meta b{display:block;font-weight:800;font-size:clamp(15px,2.8vw,17px);color:var(--ink)}
+  .leg.air{border-color:rgba(224,122,79,.5);background:linear-gradient(135deg,rgba(224,122,79,.14),rgba(224,122,79,.04))}
+  .leg.air .route .arr{color:var(--roma)}
+  .leg .fill{color:var(--lemon);font-weight:700;border-bottom:1px dashed rgba(244,197,66,.5)}
+  @media(max-width:560px){.leg{grid-template-columns:auto 1fr}.leg .meta{grid-column:1/-1;grid-row:auto;text-align:left;margin-top:.4rem}.leg .ico{grid-row:auto}}
+
+  /* ---------- LOGISTICS (hotels + info) ---------- */
+  .logi{padding:clamp(80px,12vh,140px) 0}
+  .logi .kicker{color:var(--milano)}
+  .logi-grid{max-width:900px;margin:2.6rem auto 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem}
+  .logi-card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:1.25rem 1.4rem;text-align:left}
+  .logi-card .ct{font-weight:800;font-size:1.02rem;color:var(--ink);display:flex;align-items:center;gap:.5rem}
+  .logi-card .cc{color:var(--milano);font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin:.4rem 0 .7rem}
+  .logi-card .row{display:flex;gap:.6rem;font-size:.86rem;color:var(--ink-soft);line-height:1.5;padding:.28rem 0}
+  .logi-card .row .rk{color:var(--ink);font-weight:700;flex-shrink:0;min-width:52px}
+  .logi-card .fill{color:var(--lemon);font-weight:600;border-bottom:1px dashed rgba(244,197,66,.45)}
+
+  /* ---------- PACKING ---------- */
+  .pack{padding:clamp(80px,12vh,140px) 0;background:linear-gradient(180deg,#0e2036,#0c1d31)}
+  .pack .kicker{color:var(--firenze)}
+  .pack-grid{max-width:900px;margin:2.6rem auto 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:1rem}
+  .pack-col{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:1.25rem 1.4rem;text-align:left}
+  .pack-col h4{font-weight:800;font-size:1rem;color:var(--firenze);margin-bottom:.8rem;display:flex;align-items:center;gap:.5rem}
+  .pack-col ul{list-style:none;display:flex;flex-direction:column;gap:.5rem}
+  .pack-col li{font-size:.88rem;color:var(--ink);line-height:1.45;padding-left:1.5rem;position:relative}
+  .pack-col li::before{content:"\2610";position:absolute;left:0;top:-.05em;color:var(--ink-soft);font-size:1.05em}
+  .pack-col li b{color:var(--lemon);font-weight:700}
+  .pack-col li .hint{display:block;font-size:.76rem;color:var(--ink-soft);margin-top:.1rem}
+
   /* ---------- FOOTER ---------- */
   .foot{position:relative;padding:clamp(90px,14vh,170px) 24px clamp(60px,9vh,90px);text-align:center;
     background:linear-gradient(180deg,#0e2036,#0a1826);overflow:hidden}
@@ -298,14 +338,14 @@
   </div>
   <div class="hero-inner" id="heroInner">
     <div class="flag"><span></span><span></span><span></span></div>
-    <div class="eyebrow">Viaggio di Nozze · Gennaio 2026</div>
+    <div class="eyebrow">Viaggio di Nozze · Gennaio 2027</div>
     <h1 class="title" aria-label="Italy">
       <span class="d" style="animation-delay:.55s">I</span><span class="d" style="animation-delay:.64s">t</span><span class="d" style="animation-delay:.73s">a</span><span class="d" style="animation-delay:.82s">l</span><span class="d" style="animation-delay:.91s">y</span>
     </h1>
     <div class="title-ko">이탈리아 신혼여행</div>
     <div class="names">구현지 <span>♥</span> 박진영</div>
     <div class="rule"></div>
-    <div class="dates">16 — 25 January 2026</div>
+    <div class="dates">16 — 25 January 2027</div>
     <div class="route-top"><span class="r1">Roma</span><span class="sep">—</span><span class="r2">Firenze</span><span class="sep">—</span><span class="r3">Venezia</span><span class="sep">—</span><span class="r4">Milano</span></div>
   </div>
   <div class="cue"><span>Scroll</span><span class="ln"></span></div>
@@ -316,7 +356,7 @@
   <div class="wrap" style="text-align:center">
     <div class="kicker reveal">A Glance</div>
     <div class="h2 reveal d1">한눈에 보는 여정</div>
-    <p class="lead reveal d2">인천에서 로마로 날아가, 로마 · 피렌체 · 베니스 · 밀라노를 잇는 열흘. 우리 둘의 첫 여행이에요.</p>
+    <p class="lead reveal d2">로마 IN · 밀라노 OUT · 4개 도시 · 8박 10일</p>
     <div class="ov-grid">
       <div class="ov reveal"><span class="ov-n" data-to="10">0<small>일</small></span><span class="ov-l">Giorni · 여정</span></div>
       <div class="ov reveal d1"><span class="ov-n" data-to="4">0<small>도시</small></span><span class="ov-l">Città · 도시</span></div>
@@ -400,6 +440,36 @@
   </div>
 </section>
 
+<!-- ===== TRANSIT ===== -->
+<section class="transit" id="sec-transit">
+  <div class="wrap" style="text-align:center">
+    <div class="kicker reveal">In Viaggio</div>
+    <div class="h2 reveal d1">이동 정보</div>
+    <p class="lead reveal d2">항공 2회 · 고속열차 3회 · 공항 이동</p>
+    <div class="leg-grid" id="legGrid"></div>
+  </div>
+</section>
+
+<!-- ===== LOGISTICS ===== -->
+<section class="logi" id="sec-logi">
+  <div class="wrap" style="text-align:center">
+    <div class="kicker reveal">Hotel &amp; Info</div>
+    <div class="h2 reveal d1">숙소 &amp; 실무 정보</div>
+    <p class="lead reveal d2">체크인/아웃 · 주소 · 예약번호는 확정되면 채우기</p>
+    <div class="logi-grid" id="logiGrid"></div>
+  </div>
+</section>
+
+<!-- ===== PACKING ===== -->
+<section class="pack" id="sec-pack">
+  <div class="wrap" style="text-align:center">
+    <div class="kicker reveal">Checklist</div>
+    <div class="h2 reveal d1">준비물</div>
+    <p class="lead reveal d2">1월 이탈리아 · 겨울 · 8박 10일 기준</p>
+    <div class="pack-grid" id="packGrid"></div>
+  </div>
+</section>
+
 <!-- ===== FOOTER ===== -->
 <footer class="foot">
   <div class="reveal">
@@ -416,16 +486,16 @@
 
   /* ---------- data ---------- */
   const days=[
-    {n:1,date:'1월 16일 · 토',city:'로마 도착',r:'roma',plan:[['09:00','인천공항 출발'],['11:00','라운지 식사'],['14:05','<b class="flight">대한항공 탑승</b> <span class="note">14:05 → 19:35</span>'],['21:00','레오나르도 익스프레스 탑승'],['22:00','퀴리날레 호텔 체크인 · 저녁 휴식']]},
+    {n:1,date:'1월 16일 · 토',city:'로마 도착',r:'roma',plan:[['09:00','인천공항 출발'],['11:00','라운지 식사'],['14:05','<b class="flight">KE931 탑승</b> <span class="note">14:05 → 19:35 · FCO T3</span>'],['21:00','레오나르도 익스프레스 탑승'],['22:00','퀴리날레 호텔 체크인 · 저녁 휴식']]},
     {n:2,date:'1월 17일 · 일',city:'로마',r:'roma',plan:[['09:00','트레비 분수 · 판테온 · 나보나 광장'],['12:00','점심식사'],['13:00','<b>바티칸 투어</b> 패스트트랙 <span class="note">예약 필수</span>'],['18:00','저녁식사'],['19:00','성 베드로 대성당'],['20:00','광장 야경'],['21:00','호텔 휴식']]},
     {n:3,date:'1월 18일 · 월',city:'남부 투어',r:'roma',plan:[['08:00','<b>남부 투어</b> — 폼페이 · 포지타노 · 아말피'],['22:00','호텔 휴식']]},
     {n:4,date:'1월 19일 · 화',city:'로마 → 피렌체',r:'firenze',plan:[['07:00','조식 · 퀴리날레 호텔 체크아웃 후 짐보관'],['09:00','콜로세움 · 포로 로마노 · 팔라티노 언덕'],['12:00','고속열차 · 점심식사'],['14:00','그랜드 호텔 바글리오니 체크인'],['15:00','두오모 성당 · 베키오 다리 · 미켈란젤로'],['19:00','저녁식사 <span class="note">티본스테이크</span>'],['20:00','미켈란젤로 광장 야경 · 호텔 휴식']]},
     {n:5,date:'1월 20일 · 수',city:'토스카나',r:'firenze',plan:[['07:00','기상 및 준비'],['09:00','아침식사'],['10:00','<b>토스카나 투어</b> — 시에나 · 와이너리 · 산지미냐노'],['20:00','저녁식사'],['22:00','호텔 휴식']]},
     {n:6,date:'1월 21일 · 목',city:'피렌체 → 베니스',r:'venezia',plan:[['07:00','그랜드 호텔 바글리오니 체크아웃 · 짐보관'],['09:00','아카데미아 미술관'],['12:00','중앙시장 + 점심'],['13:00','고속열차'],['17:00','레오나르도 로얄 호텔 베니스 메스트레 체크인'],['18:00','저녁식사'],['19:00','리알토 다리 · 대운하 야경'],['22:00','호텔 휴식']]},
     {n:7,date:'1월 22일 · 금',city:'베니스',r:'venezia',plan:[['07:00','기상 및 아침식사'],['09:00','산 마르코 광장 · 대성당 · 두칼레 궁전'],['12:00','점심식사'],['13:00','무라노 · 부라노 섬'],['19:00','저녁식사'],['20:00','곤돌라 야경'],['22:00','호텔 휴식']]},
-    {n:8,date:'1월 23일 · 토',city:'베니스 → 밀라노',r:'milano',plan:[['07:00','기상 및 아침식사'],['09:00','레오나르도 로얄 호텔 체크아웃'],['10:00','고속열차'],['13:00','NYX 호텔 밀란 체크인 · 짐보관'],['14:00','밀라노 두오모 성당 · 두오모 옥상'],['15:00','점심식사'],['16:00','갤러리아 쇼핑'],['19:00','스포르체스코 성'],['21:00','저녁식사'],['22:00','호텔 휴식']]},
-    {n:9,date:'1월 24일 · 일',city:'밀라노 → 귀국',r:'milano',plan:[['07:00','기상 및 아침식사'],['09:00','NYX 호텔 밀란 체크아웃'],['10:00','밀라노 시내'],['15:00','공항 이동 및 체크인'],['20:05','<b class="flight">대한항공 탑승</b> <span class="note">20:05 → 15:35 (+1)</span>']]},
-    {n:10,date:'1월 25일 · 월',city:'인천 도착',r:'milano',plan:[['15:35','인천공항 도착'],['16:00','집으로 귀가'],['18:00','달콤한 휴식 🏡']]},
+    {n:8,date:'1월 23일 · 토',city:'베니스 → 밀라노',r:'milano',plan:[['07:00','기상 및 아침식사'],['09:00','레오나르도 로얄 호텔 체크아웃'],['10:00','고속열차'],['13:00','NYX 호텔 밀란 체크인 · 짐보관'],['13:30','점심식사'],['14:30','<b>최후의 만찬</b> <span class="note">예약 필수 · 30분 전 도착</span>'],['15:30','밀라노 <b>두오모 + 옥상</b> <span class="note">시간대 예약</span>'],['17:00','갤러리아 쇼핑'],['19:00','스포르체스코 성'],['21:00','저녁식사'],['22:00','호텔 휴식']]},
+    {n:9,date:'1월 24일 · 일',city:'밀라노 → 귀국',r:'milano',plan:[['07:00','기상 및 아침식사'],['09:00','NYX 호텔 밀란 체크아웃'],['10:00','밀라노 시내'],['15:00','공항 이동 및 체크인'],['20:05','<b class="flight">KE928 탑승</b> <span class="note">20:05 → 15:35 (+1) · MXP T1</span>']]},
+    {n:10,date:'1월 25일 · 월',city:'인천 도착',r:'milano',plan:[['15:35','인천공항 도착'],['16:00','집으로 귀가'],['18:00','휴식']]},
   ];
   const chapters=[
     {r:'roma',idx:'01',lat:'Roma',ko:'로마',nights:'3박',dates:'1.16–1.19',hotel:'퀴리날레 호텔',tag:'ROMA'},
@@ -482,11 +552,12 @@
     ['🔴','피렌체 두오모 돔 등반','Day 4 · 1/19','성당 내부는 무료, 돔은 브루넬레스키 패스로 시간 예약 (2~3주 전 매진)'],
     ['🗿','아카데미아 미술관 (다비드상)','Day 6 · 1/21','시간 지정 예약, 최소 1~2주 전 (공식 b-ticket)'],
     ['🦁','두칼레 궁전 · 산 마르코 대성당','Day 7 · 1/22','둘 다 스킵더라인 예약 추천 (대성당 줄이 특히 길어요)'],
-    ['🕍','밀라노 두오모 + 옥상','Day 8 · 1/23 (토)','주말·공휴일은 예약제만 입장 → 반드시 사전 예약'],
+    ['🎨','최후의 만찬 (다빈치)','Day 8 · 1/23 (토) · 최우선','2026년 9월 중순 오픈 → 한국시간 저녁 7시(이탈리아 정오)에 lastsupper.shop에서 즉시 예약. 여권 영문 이름 입력, 이름 변경 불가. 실패 시 → GetYourGuide·Tiqets 가이드 투어에 별도 물량'],
+    ['🕍','밀라노 두오모 + 옥상','Day 8 · 1/23 (토)','주말은 예약제만 입장 → 방문 1~2개월 전(11~12월) 시간대 지정 예약. 실패 시 → 계단(엘리베이터 대신) 티켓은 여유 있음 / 성당 내부만이라도 관람'],
   ];
   const opt=[
-    ['🎨','최후의 만찬 (다빈치)','밀라노 · 현재 일정엔 없음','이탈리아에서 가장 예약 어려운 티켓. 2~4개월 전 + 매주 수요일 정오 추가분. 넣고 싶으면 지금 확인!'],
     ['🚄','고속열차 (Frecciarossa / Italo)','4개 도시 이동','미리 예약하면 요금이 훨씬 저렴하고 좌석도 확보돼요'],
+    ['🔔','최후의 만찬 오픈일 알림','2026년 9월 초부터','cenacolovinciano.org 공지를 매일 확인. 오픈 날짜 뜨면 알람 맞추기 (2027년 1월분 정확한 오픈일은 아직 미발표)'],
   ];
   const mk=(a,soft)=>a.map(x=>`<div class="res-card${soft?' soft':''}"><span class="b">${x[0]}</span><span><span class="k">${x[1]}</span><span class="dd">${x[2]}</span><span class="s">${x[3]}</span></span></div>`).join('');
   document.getElementById('resReq').innerHTML=mk(req,false);
@@ -498,7 +569,7 @@
     ['그랜드 호텔 바글리오니','피렌체 2박 (1/19–21) · 조식 미포함',485107,false],
     ['레오나르도 로얄 호텔 베니스 메스트레','베니스 2박 (1/21–23) · 조식 미포함',288374,false],
     ['NYX 호텔 밀란 바이 레오나르도','밀라노 1박 (1/23–24) · 조식 미포함',180716,false],
-    ['대한항공 항공권','로마 IN / 밀라노 OUT',2657000,true],
+    ['대한항공 항공권','KE931 로마 IN / KE928 밀라노 OUT',2657000,true],
   ];
   const total=budget.reduce((s,b)=>s+b[2],0);
   const bt=document.getElementById('btable');
@@ -510,8 +581,41 @@
   bnote.innerHTML=`<span class="bi">💶</span><span><span class="bt-k">현지 경비 · 환전 완료</span><span class="bt-s">식사 · 입장권 · 쇼핑 · 투어 등 현지 지출용 (≈ €2,650)</span></span><span class="bt-amt">4,000,000</span>`;
   bt.parentElement.appendChild(bnote);
 
+  /* ---------- transit (trains + flights) ---------- */
+  const F='<span class="fill">____</span>';
+  const legs=[
+    ['air','✈','인천 <span class="arr">→</span> 로마 (FCO)','1/16 (토) · KE931 · A350-900 · 직항','ICN T2 14:05 → FCO T3 19:35','13시간 30분 · 39H / '+F],
+    ['train','🚄','로마 Termini <span class="arr">→</span> 피렌체 S.M.N.','1/19 (화) · 프레차로사 약 1시간 30분','예약 '+F,'좌석 '+F],
+    ['train','🚄','피렌체 S.M.N. <span class="arr">→</span> 베니스 Mestre','1/21 (목) · 프레차로사 약 2시간','예약 '+F,'좌석 '+F],
+    ['train','🚄','베니스 Mestre <span class="arr">→</span> 밀라노 Centrale','1/23 (토) · 프레차로사 약 2시간 30분','예약 '+F,'좌석 '+F],
+    ['transfer','🚇','밀라노 Centrale <span class="arr">→</span> 말펜사 T1','1/24 (일) · 말펜사 익스프레스 약 51분 · €13','15~30분 간격','플랫폼 3'],
+    ['air','✈','밀라노 (MXP) <span class="arr">→</span> 인천','1/24 (일) · KE928 · B787-9 · 직항','MXP T1 20:05 → ICN T2 15:35 (+1)','11시간 30분 · 35B / '+F],
+  ];
+  document.getElementById('legGrid').innerHTML=legs.map(l=>
+    `<div class="leg reveal${l[0]==='air'?' air':''}"><span class="ico">${l[1]}</span><span class="route">${l[2]}</span><span class="sub">${l[3]}</span><span class="meta"><b>${l[4]}</b>${l[5]}</span></div>`).join('');
+
+  /* ---------- logistics (hotels + practical) ---------- */
+  const logi=[
+    ['🏨','퀴리날레 호텔','로마 · 1/16–19 · 562,342원',[['체크인','15:00'],['체크아웃','12:00 · 짐보관 가능'],['주소','Via Nazionale 7, 00184 Roma'],['위치','레푸블리카역 150m · 조식 포함'],['예약번호',F]]],
+    ['🏨','그랜드 호텔 바글리오니','피렌체 · 1/19–21 · 485,107원',[['체크인','15:00'],['체크아웃','12:00'],['주소','Piazza dell\'Unità Italiana 6, 50123 Firenze'],['위치','S.M.N.역 200m (지하통로 연결)'],['예약번호',F]]],
+    ['🏨','레오나르도 로얄 (메스트레)','베니스 · 1/21–23 · 288,374원',[['체크인','14:00'],['체크아웃','12:00'],['주소','Via Ca\' Marcello 6, 30172 Mestre-Venezia'],['위치','베니스 Mestre역 바로 옆'],['예약번호',F]]],
+    ['🏨','NYX 호텔 밀란','밀라노 · 1/23–24 · 180,716원',[['체크인','15:00'],['체크아웃','11:00 · 짐보관 가능'],['주소','Piazza IV Novembre 3, 20124 Milano'],['위치','밀라노 Centrale역 앞 450m'],['예약번호',F]]],
+  ];
+  document.getElementById('logiGrid').innerHTML=logi.map(c=>
+    `<div class="logi-card reveal"><div class="ct">${c[0]} ${c[1]}</div><div class="cc">${c[2]}</div>${c[3].map(r=>`<div class="row"><span class="rk">${r[0]}</span><span>${r[1]}</span></div>`).join('')}</div>`).join('');
+
+  /* ---------- packing ---------- */
+  const pack=[
+    ['🧳','필수 · 서류',['<b>여권</b> + 사본/사진<span class="hint">분실 대비 별도 보관</span>','항공권 · e티켓','<b>모든 예약 바코드/QR</b><span class="hint">최후의 만찬·두오모·바티칸·콜로세움·기차</span>','해외 결제 카드 2장 이상','여행자 보험 증서']],
+    ['🧥','겨울 옷 (1월)',['두꺼운 패딩/코트<span class="hint">밀라노·베니스 영하 가능</span>','히트텍 등 내복','목도리 · 장갑 · 비니','편한 방수 신발<span class="hint">돌길 많음</span>','우산 (겨울비 대비)']],
+    ['🔌','전자 · 소품',['<b>C/F형 멀티어댑터</b><span class="hint">220V</span>','보조배터리','유심/이심 또는 로밍','카메라 · 충전기','목베개 (장거리 비행)']],
+    ['💊','상비약 · 기타',['소화제 · 지사제 · 진통제','밴드 · 개인약','립밤 · 핸드크림<span class="hint">겨울 건조</span>','물티슈 · 휴지','에코백 (마트·기념품)']],
+  ];
+  document.getElementById('packGrid').innerHTML=pack.map(c=>
+    `<div class="pack-col reveal"><h4>${c[0]} ${c[1]}</h4><ul>${c[2].map(i=>`<li>${i}</li>`).join('')}</ul></div>`).join('');
+
   /* ---------- nav dots ---------- */
-  const secs=[['top','시작','#20303a'],['sec-roma','로마',HEX.roma],['sec-firenze','피렌체',HEX.firenze],['sec-venezia','베니스',HEX.venezia],['sec-milano','밀라노',HEX.milano],['sec-reserve','예약',HEX.venezia],['sec-budget','예산',HEX.firenze]];
+  const secs=[['top','시작','#20303a'],['sec-roma','로마',HEX.roma],['sec-firenze','피렌체',HEX.firenze],['sec-venezia','베니스',HEX.venezia],['sec-milano','밀라노',HEX.milano],['sec-reserve','예약',HEX.venezia],['sec-budget','예산',HEX.firenze],['sec-transit','이동',HEX.venezia],['sec-logi','숙소',HEX.milano],['sec-pack','준비물',HEX.firenze]];
   const nav=document.getElementById('navdots');
   secs.forEach(s=>{const a=document.createElement('a');a.href='#'+s[0];a.dataset.l=s[1];a.style.setProperty('--c',s[2]);a.dataset.t=s[0];nav.appendChild(a);});
   const navA=[...nav.children];
