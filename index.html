@@ -2,815 +2,1087 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#111317" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="format-detection" content="telephone=no">
+<meta name="description" content="구현지 ♥ 박진영 · 2027.1.16–1.25 이탈리아 신혼여행 — 로마 · 피렌체 · 베니스 · 밀라노 8박 10일 일정표">
 <title>이탈리아 신혼여행 · Viaggio di Nozze</title>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link rel="preconnect" href="https://upload.wikimedia.org" crossorigin>
 <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <style>
-  :root{
-    --ink:#eef2ea; --ink-soft:#9db0c2;
-    --cream:#0e2036; --panel:#152b45; --line:rgba(255,255,255,.14);
-    --navy-hi:#1b3a5c; --roma:#e07a4f; --firenze:#e6b23e; --venezia:#4bb0d1; --milano:#d17aa0;
-    --lemon:#f4c542;
+/* ============ TOKENS ============ */
+:root{
+  /* neutrals */
+  --bg:#ffffff;
+  --bg-sub:#f4f6f8;
+  --card:#ffffff;
+  --line:#e9ecef;
+  --line-strong:#dde1e6;
+  --t1:#16181d;   /* primary text */
+  --t2:#4e5968;   /* secondary */
+  --t3:#8b95a1;   /* tertiary */
+  --chip:#f2f4f6;
+
+  /* brand */
+  --brand:#1a5cff;
+  --brand-weak:#eaf1ff;
+  --brand-ink:#0b3fb5;
+
+  /* city accents (tuned for light bg) */
+  --roma:#e0512b;      --roma-weak:#fdeee9;
+  --firenze:#b8860b;   --firenze-weak:#fbf3e0;
+  --venezia:#0d8bb3;   --venezia-weak:#e6f5fa;
+  --milano:#b8477f;    --milano-weak:#fbecf4;
+
+  --warn:#e8590c;      --warn-weak:#fff2e8;
+  --ok:#0f9d58;
+
+  /* metrics */
+  --hdr:56px;
+  --tabs:50px;
+  --r-sm:10px; --r-md:14px; --r-lg:20px; --r-xl:26px;
+  --sh-1:0 1px 2px rgba(16,24,40,.04), 0 2px 10px rgba(16,24,40,.05);
+  --sh-2:0 4px 14px rgba(16,24,40,.08), 0 10px 30px rgba(16,24,40,.06);
+  --pad:20px;
+  --safe-b:env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#111317; --bg-sub:#16191e; --card:#1a1e24; --line:#262b33; --line-strong:#333a44;
+    --t1:#eef1f5; --t2:#a9b3c0; --t3:#7c8794; --chip:#22272f;
+    --brand:#5b8dff; --brand-weak:#18233b; --brand-ink:#a9c4ff;
+    --roma:#ff8a63; --roma-weak:#2c1c16;
+    --firenze:#e5b53f; --firenze-weak:#2b2416;
+    --venezia:#48b9dd; --venezia-weak:#122730;
+    --milano:#e884b6; --milano-weak:#2b1a25;
+    --warn:#ff9a52; --warn-weak:#2d1f15;
+    --sh-1:0 1px 2px rgba(0,0,0,.4); --sh-2:0 8px 26px rgba(0,0,0,.5);
   }
-  *{margin:0;padding:0;box-sizing:border-box}
-  html{scroll-behavior:smooth}
-  body{font-family:"Pretendard",sans-serif;color:var(--ink);background:var(--cream);
-    line-height:1.7;overflow-x:hidden;-webkit-font-smoothing:antialiased}
-  ::selection{background:var(--lemon)}
-  #cityTint{position:fixed;inset:0;z-index:70;pointer-events:none;opacity:0;
-    background:radial-gradient(130% 100% at 50% 10%,var(--tint,transparent),transparent 60%);
-    mix-blend-mode:screen;transition:opacity 1s ease, background 1s ease}
-  #cityTint.show{opacity:.5}
+}
 
-  /* ---------- loader ---------- */
-  #loader{position:fixed;inset:0;z-index:9999;background:#0a1826;display:flex;flex-direction:column;
-    align-items:center;justify-content:center;gap:26px;transition:opacity .8s ease,visibility .8s}
-  #loader.done{opacity:0;visibility:hidden}
-  .l-flag{display:flex;width:52px;height:35px;border-radius:4px;overflow:hidden;
-    box-shadow:0 0 28px rgba(244,197,66,.3)}
-  .l-flag span{flex:1;animation:lwave 1.2s ease-in-out infinite}
-  .l-flag span:nth-child(1){background:#008C45}.l-flag span:nth-child(2){background:#f4f5f0;animation-delay:.15s}
-  .l-flag span:nth-child(3){background:#CD212A;animation-delay:.3s}
-  @keyframes lwave{0%,100%{transform:scaleY(1)}50%{transform:scaleY(.7)}}
-  .l-word{color:#f4ead6;letter-spacing:.5em;font-size:13px;font-weight:300;padding-left:.5em;opacity:.85}
-  .l-bar{width:160px;height:2px;background:rgba(255,255,255,.15);border-radius:2px;overflow:hidden}
-  .l-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--roma),var(--firenze),var(--venezia),var(--milano));
-    animation:lfill 1.9s ease forwards}
-  @keyframes lfill{to{width:100%}}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{
+  font-family:"Pretendard","Pretendard Variable",-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+  background:var(--bg-sub); color:var(--t1);
+  line-height:1.6; letter-spacing:-.01em;
+  overflow-x:hidden; -webkit-font-smoothing:antialiased;
+  padding-bottom:calc(64px + var(--safe-b));
+}
+img{display:block;max-width:100%}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+a{color:inherit;text-decoration:none}
+::selection{background:var(--brand);color:#fff}
 
-  /* ---------- fixed UI ---------- */
-  .progress{position:fixed;top:0;left:0;height:3px;width:0;z-index:200;
-    background:linear-gradient(90deg,var(--roma),var(--firenze),var(--venezia),var(--milano));box-shadow:0 0 10px rgba(47,146,181,.6)}
-  .navdots{position:fixed;right:22px;top:50%;transform:translateY(-50%);z-index:150;
-    display:flex;flex-direction:column;gap:14px}
-  .navdots a{width:11px;height:11px;border-radius:50%;background:rgba(255,255,255,.28);
-    transition:all .3s;position:relative}
-  .navdots a.on{background:var(--c,var(--ink));transform:scale(1.35)}
-  .navdots a::after{content:attr(data-l);position:absolute;right:20px;top:50%;transform:translateY(-50%) translateX(6px);
-    opacity:0;font-size:11px;letter-spacing:.14em;color:var(--ink);white-space:nowrap;transition:.3s;pointer-events:none;font-weight:700}
-  .navdots a:hover::after{opacity:1;transform:translateY(-50%) translateX(0)}
-  .totop{position:fixed;right:20px;bottom:20px;z-index:150;width:46px;height:46px;border-radius:50%;border:none;
-    cursor:pointer;background:var(--venezia);color:#fff;font-size:20px;box-shadow:0 10px 24px -10px rgba(34,50,61,.6);
-    opacity:0;transform:translateY(16px);transition:.4s;pointer-events:none}
-  .totop.show{opacity:1;transform:none;pointer-events:auto}
-  @media(max-width:700px){.navdots{display:none}}
+/* app shell — keeps it phone-shaped on desktop */
+.app{max-width:560px;margin:0 auto;background:var(--bg);min-height:100svh;
+  box-shadow:0 0 0 1px var(--line), 0 0 60px rgba(16,24,40,.06);position:relative}
+@media(min-width:561px){ body{background:var(--bg-sub)} }
 
-  /* ---------- HERO ---------- */
-  .hero{position:relative;height:100svh;min-height:600px;display:flex;flex-direction:column;
-    align-items:center;justify-content:center;text-align:center;overflow:hidden;
-    background:linear-gradient(180deg,#183654 0%,#112b45 48%,#0c1d31 100%)}
-  .stars{position:absolute;inset:0;z-index:0;pointer-events:none}
-  .star{position:absolute;border-radius:50%;background:radial-gradient(circle,#fff,rgba(255,244,214,.4) 60%,transparent);
-    animation:tw ease-in-out infinite}
-  @keyframes tw{0%,100%{opacity:0;transform:translateY(0)}50%{opacity:.8;transform:translateY(-8px)}}
-  .shooting{position:absolute;height:2.5px;width:180px;pointer-events:none;
-    background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.95) 55%,#fff);
-    border-radius:3px;opacity:0;transform:rotate(20deg);filter:drop-shadow(0 0 9px rgba(255,255,255,.85))}
-  .shooting::after{content:"";position:absolute;right:0;top:-2px;width:6px;height:6px;border-radius:50%;background:#fff;
-    box-shadow:0 0 14px 4px rgba(255,255,255,.95)}
-  @keyframes shoot{0%{opacity:0;transform:translate(0,0) rotate(20deg) scaleX(.2)}
-    10%{opacity:1}
-    100%{opacity:0;transform:translate(420px,153px) rotate(20deg) scaleX(1)}}
-  .hero-scene{position:absolute;left:0;right:0;bottom:0;z-index:1;line-height:0;will-change:transform}
-  .hero-scene svg{width:100%;height:auto;display:block}
-  .hero-inner{position:relative;z-index:3;padding:0 22px;will-change:transform,opacity}
-  .flag{display:inline-flex;width:56px;height:38px;border-radius:4px;overflow:hidden;margin-bottom:1.5rem;
-    box-shadow:0 8px 22px -8px rgba(34,50,61,.5);border:1px solid rgba(255,255,255,.6);
-    opacity:0;animation:fadeUp .9s .2s forwards}
-  .flag span{flex:1;animation:fwave 3.6s ease-in-out infinite}
-  .flag span:nth-child(1){background:#008C45}.flag span:nth-child(2){background:#f4f5f0;animation-delay:.25s}
-  .flag span:nth-child(3){background:#CD212A;animation-delay:.5s}
-  @keyframes fwave{0%,100%{transform:scaleY(1)}50%{transform:scaleY(.965)}}
-  .eyebrow{letter-spacing:.5em;text-transform:uppercase;font-size:clamp(10px,2vw,14px);color:var(--roma);
-    font-weight:600;padding-left:.5em;margin-bottom:1.1rem;opacity:0;animation:fadeUp 1s .4s forwards}
-  .title{font-weight:800;font-size:clamp(74px,20vw,230px);line-height:.86;letter-spacing:-.02em;color:var(--ink)}
-  .title .d{display:inline-block;opacity:0;transform:translateY(60px) rotate(-6deg);animation:drop .9s forwards}
-  @keyframes drop{to{opacity:1;transform:none}}
-  .title-ko{font-weight:600;font-size:clamp(20px,5vw,38px);letter-spacing:.35em;padding-left:.35em;
-    margin-top:1rem;color:var(--roma);opacity:0;animation:fadeUp 1.1s 1.1s forwards}
-  .names{font-weight:700;font-size:clamp(15px,3.2vw,22px);letter-spacing:.14em;color:var(--ink);
-    margin-top:.9rem;opacity:0;animation:fadeUp 1.1s 1.3s forwards}
-  .names span{color:#e87e8e;margin:0 .25em;font-size:.9em;display:inline-block;animation:beat 1.8s ease-in-out infinite}
-  .rule{width:0;height:1px;background:linear-gradient(90deg,transparent,var(--firenze),transparent);
-    margin:1.9rem auto 1.4rem;animation:grow 1.3s 1.25s forwards}
-  @keyframes grow{to{width:min(300px,66vw)}}
-  .dates{font-size:clamp(17px,3.2vw,26px);letter-spacing:.18em;color:var(--ink-soft);font-weight:300;
-    opacity:0;animation:fadeUp 1.1s 1.45s forwards}
-  .route-top{display:flex;gap:.6rem;flex-wrap:wrap;justify-content:center;margin-top:1.4rem;
-    font-size:clamp(13px,2.5vw,18px);letter-spacing:.22em;text-transform:uppercase;font-weight:600;
-    opacity:0;animation:fadeUp 1.1s 1.65s forwards}
-  .route-top .r1{color:var(--roma)}.route-top .r2{color:var(--firenze)}.route-top .r3{color:var(--venezia)}.route-top .r4{color:var(--milano)}
-  .route-top .sep{color:var(--ink-soft);opacity:.5}
-  .cue{position:absolute;bottom:22px;left:50%;transform:translateX(-50%);z-index:3;display:flex;flex-direction:column;
-    align-items:center;gap:7px;font-size:10px;letter-spacing:.3em;color:var(--ink-soft);text-transform:uppercase;
-    opacity:0;animation:fadeUp 1.2s 2s forwards}
-  .cue .ln{width:1px;height:34px;background:linear-gradient(var(--firenze),transparent);animation:cuep 1.7s ease-in-out infinite}
-  @keyframes cuep{0%,100%{transform:scaleY(.4);transform-origin:top;opacity:.4}50%{transform:scaleY(1);opacity:1}}
-  @keyframes fadeUp{to{opacity:1;transform:none}}
+/* ============ HEADER ============ */
+.hdr{position:sticky;top:0;z-index:90;height:var(--hdr);display:flex;align-items:center;
+  gap:10px;padding:0 16px;transition:background .25s, border-color .25s, backdrop-filter .25s;
+  border-bottom:1px solid transparent;background:transparent}
+.hdr.solid{background:color-mix(in srgb, var(--bg) 86%, transparent);backdrop-filter:saturate(180%) blur(14px);
+  -webkit-backdrop-filter:saturate(180%) blur(14px);border-bottom-color:var(--line)}
+.hdr .brand{display:flex;align-items:center;gap:8px;font-weight:800;font-size:15px;letter-spacing:-.02em;
+  opacity:0;transform:translateY(6px);transition:.25s}
+.hdr.solid .brand{opacity:1;transform:none}
+.tricolor{display:inline-flex;width:20px;height:14px;border-radius:3px;overflow:hidden;flex:0 0 auto;
+  box-shadow:0 0 0 1px rgba(0,0,0,.06)}
+.tricolor i{flex:1}
+.tricolor i:nth-child(1){background:#008C45}.tricolor i:nth-child(2){background:#f4f5f0}.tricolor i:nth-child(3){background:#CD212A}
+.hdr .spacer{flex:1}
+.icon-btn{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;
+  background:rgba(255,255,255,.9);box-shadow:var(--sh-1);color:#16181d;transition:.2s}
+.hdr.solid .icon-btn{background:var(--chip);box-shadow:none;color:var(--t1)}
+.icon-btn:active{transform:scale(.93)}
+.icon-btn svg{width:19px;height:19px}
 
-  /* ---------- generic reveal ---------- */
-  .reveal{opacity:0;transform:translateY(40px);transition:opacity 1s cubic-bezier(.2,.7,.2,1),transform 1s cubic-bezier(.2,.7,.2,1)}
-  .reveal.in{opacity:1;transform:none}
-  .reveal.d1{transition-delay:.12s}.reveal.d2{transition-delay:.24s}.reveal.d3{transition-delay:.36s}.reveal.d4{transition-delay:.48s}
+/* ============ HERO ============ */
+.hero{position:relative;margin-top:calc(var(--hdr) * -1);height:min(74svh,600px);min-height:460px;
+  display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden;isolation:isolate}
+.hero-slides{position:absolute;inset:0;z-index:-2}
+.hero-slides img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;
+  animation:heroFade 24s infinite;transform:scale(1.06)}
+.hero-slides img:nth-child(1){animation-delay:-1s}
+.hero-slides img:nth-child(2){animation-delay:6s}
+.hero-slides img:nth-child(3){animation-delay:12s}
+.hero-slides img:nth-child(4){animation-delay:18s}
+@keyframes heroFade{
+  0%{opacity:0;transform:scale(1.10)}
+  4%{opacity:1}
+  25%{opacity:1;transform:scale(1.0)}
+  29%{opacity:0}
+  100%{opacity:0;transform:scale(1.0)}
+}
+.hero::after{content:"";position:absolute;inset:0;z-index:-1;
+  background:linear-gradient(180deg,rgba(8,12,20,.55) 0%,rgba(8,12,20,.12) 30%,rgba(8,12,20,.55) 66%,rgba(8,12,20,.88) 100%)}
+.hero-body{padding:0 var(--pad) 54px;color:#fff;position:relative}
+.hero-eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;font-weight:700;letter-spacing:.14em;
+  text-transform:uppercase;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);padding:6px 12px;border-radius:999px;margin-bottom:14px}
+.hero h1{font-size:clamp(30px,8.6vw,40px);font-weight:800;line-height:1.18;letter-spacing:-.035em;
+  text-shadow:0 2px 18px rgba(0,0,0,.35)}
+.hero h1 em{font-style:normal;display:block;font-size:.52em;font-weight:600;letter-spacing:.16em;
+  opacity:.88;margin-bottom:6px;text-transform:uppercase}
+.hero-names{margin-top:10px;font-size:15px;font-weight:600;opacity:.95;display:flex;align-items:center;gap:7px}
+.hero-names .hb{color:#ff8a9c;animation:beat 1.9s ease-in-out infinite;display:inline-block}
+@keyframes beat{0%,100%{transform:scale(1)}12%{transform:scale(1.28)}26%{transform:scale(1)}38%{transform:scale(1.16)}}
+.hero-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:16px}
+.hero-chips span{font-size:12.5px;font-weight:600;padding:6px 11px;border-radius:999px;
+  background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.26);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.hero-route{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:14px;font-size:13px;
+  font-weight:700;letter-spacing:.02em;opacity:.95}
+.hero-route i{font-style:normal;opacity:.5;font-weight:400}
 
-  .wrap{max-width:1040px;margin:0 auto;padding:0 24px}
-  .kicker{font-weight:700;letter-spacing:.24em;text-transform:uppercase;font-size:13px;color:var(--roma)}
-  .h2{font-weight:800;font-size:clamp(28px,6vw,52px);letter-spacing:-.01em;margin-top:.4rem;line-height:1.1}
-  .lead{color:var(--ink-soft);font-size:clamp(15px,3vw,18px);max-width:640px;margin:1rem auto 0}
+/* D-day floating card */
+.dday{margin:-32px var(--pad) 0;position:relative;z-index:5;background:var(--card);border-radius:var(--r-lg);
+  box-shadow:var(--sh-2);border:1px solid var(--line);padding:16px 18px;display:flex;align-items:center;gap:14px}
+.dday-num{font-size:30px;font-weight:800;letter-spacing:-.04em;color:var(--brand);line-height:1;
+  font-variant-numeric:tabular-nums}
+.dday-num small{font-size:.44em;font-weight:700;margin-left:2px;letter-spacing:0}
+.dday-txt{flex:1;min-width:0}
+.dday-txt b{display:block;font-size:14px;font-weight:700}
+.dday-txt span{display:block;font-size:12.5px;color:var(--t3);margin-top:1px}
+.nightbar{margin:16px var(--pad) 0}
+.nightbar .tr{display:flex;height:8px;border-radius:99px;overflow:hidden;background:var(--chip);gap:2px}
+.nightbar .tr i{height:100%;width:0;transition:width .9s cubic-bezier(.2,.8,.2,1)}
+.nightbar .lg{display:flex;margin-top:8px;font-size:11.5px;font-weight:700;color:var(--t3)}
+.nightbar .lg span{flex:1 1 0;display:flex;align-items:center;gap:5px;justify-content:center;
+  min-width:0;white-space:nowrap}
+.nightbar .lg em{width:7px;height:7px;border-radius:50%;flex:0 0 auto;font-style:normal}
 
-  /* ---------- OVERVIEW counters ---------- */
-  .overview{padding:clamp(70px,11vh,130px) 0}
-  .ov-grid{display:grid;grid-template-columns:repeat(4,1fr);margin-top:3rem}
-  .ov{position:relative;text-align:center;padding:.8rem .4rem;display:flex;flex-direction:column;gap:.4rem}
-  .ov + .ov::before{content:"";position:absolute;left:0;top:18%;bottom:18%;width:1px;background:var(--line)}
-  .ov-n{font-weight:200;font-size:clamp(46px,9vw,90px);line-height:.85;letter-spacing:-.03em}
-  .ov:nth-child(1) .ov-n{color:var(--roma)}.ov:nth-child(2) .ov-n{color:var(--firenze)}
-  .ov:nth-child(3) .ov-n{color:var(--venezia)}.ov:nth-child(4) .ov-n{color:var(--milano)}
-  .ov-n small{font-size:.32em;font-weight:500;color:var(--ink-soft);margin-left:.15em}
-  .ov-l{font-size:clamp(12px,2.4vw,14px);color:var(--ink-soft);letter-spacing:.1em;font-weight:600}
-  @media(max-width:600px){.ov-grid{grid-template-columns:repeat(2,1fr);gap:1.4rem 0}.ov:nth-child(3)::before{display:none}}
+/* ============ TABS ============ */
+.tabs{position:sticky;top:var(--hdr);z-index:80;background:color-mix(in srgb, var(--bg) 92%, transparent);
+  backdrop-filter:saturate(180%) blur(14px);-webkit-backdrop-filter:saturate(180%) blur(14px);
+  border-bottom:1px solid var(--line);margin-top:24px}
+.tabs-scroll{display:flex;gap:4px;overflow-x:auto;padding:0 12px;scrollbar-width:none;height:var(--tabs)}
+.tabs-scroll::-webkit-scrollbar{display:none}
+.tabs-scroll a{flex:0 0 auto;display:grid;place-items:center;padding:0 12px;font-size:14px;font-weight:600;
+  color:var(--t3);position:relative;transition:color .2s;white-space:nowrap}
+.tabs-scroll a.on{color:var(--t1);font-weight:800}
+.tabs-scroll a.on::after{content:"";position:absolute;left:10px;right:10px;bottom:0;height:2.5px;
+  border-radius:3px 3px 0 0;background:var(--t1)}
 
-  /* ---------- JOURNEY MAP ---------- */
-  .journey{padding:clamp(50px,8vh,90px) 0 clamp(70px,11vh,130px);text-align:center;overflow:hidden}
-  .map{max-width:900px;margin:2.4rem auto 0}
+/* ============ SECTION ============ */
+section{scroll-margin-top:calc(var(--hdr) + var(--tabs) + 8px)}
+.sec{padding:34px 0 6px}
+.sec-head{padding:0 var(--pad);margin-bottom:16px}
+.sec-kicker{font-size:11.5px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--brand);
+  margin-bottom:6px}
+.sec-title{font-size:21px;font-weight:800;letter-spacing:-.035em;line-height:1.32}
+.sec-sub{font-size:13.5px;color:var(--t3);margin-top:5px;line-height:1.55}
+.divider{height:8px;background:var(--bg-sub);border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+  margin-top:30px}
 
-  /* ---------- real geographic map (Leaflet) ---------- */
-  .geomap{padding:clamp(40px,6vh,70px) 0 clamp(60px,9vh,110px);text-align:center;overflow:hidden}
-  .geomap .kicker{color:var(--venezia)}
-  .geomap-wrap{position:relative;max-width:900px;margin:2.4rem auto 0}
-  #realmap{height:clamp(380px,60vh,560px);width:100%;border-radius:18px;
-    border:1px solid var(--line);background:#0a1826;z-index:1;
-    box-shadow:0 24px 60px rgba(0,0,0,.42)}
-  #realmap .leaflet-tile{filter:brightness(.92) contrast(1.02)}
-  .leaflet-container{background:#0a1826;font-family:"Pretendard",sans-serif}
-  .leaflet-popup-content-wrapper{background:var(--panel);color:var(--ink);
-    border-radius:12px;border:1px solid var(--line);box-shadow:0 12px 34px rgba(0,0,0,.5)}
-  .leaflet-popup-tip{background:var(--panel);border:1px solid var(--line)}
-  .leaflet-popup-content{margin:12px 16px;line-height:1.5}
-  .pop-t{font-weight:800;font-size:16px;letter-spacing:-.01em}
-  .pop-s{color:var(--ink-soft);font-size:12.5px;margin-top:2px}
-  .leaflet-bar a,.leaflet-control-attribution{background:var(--panel)!important;color:var(--ink-soft)!important;
-    border-color:var(--line)!important}
-  .leaflet-control-attribution a{color:var(--venezia)!important}
-  .city-pin{display:grid;place-items:center;border-radius:50%;color:#0a1826;
-    font-weight:800;font-size:13px;border:2px solid rgba(255,255,255,.85);
-    box-shadow:0 4px 14px rgba(0,0,0,.5)}
-  .map-legend{display:flex;flex-wrap:wrap;justify-content:center;gap:14px 22px;margin-top:1.6rem}
-  .map-legend span{display:inline-flex;align-items:center;gap:8px;font-size:13.5px;color:var(--ink-soft)}
-  .map-legend i{width:12px;height:12px;border-radius:50%;display:inline-block}
-  .map svg{width:100%;height:auto;overflow:visible}
-  .path-bg{fill:none;stroke:var(--line);stroke-width:2}
-  .path-fg{fill:none;stroke:url(#grad);stroke-width:3.5;stroke-linecap:round}
-  .sl{font-weight:700;font-size:22px}.ss{font-size:12px;fill:var(--ink-soft)}
-  .dot{transform-box:fill-box;transform-origin:center;transform:scale(0);transition:transform .6s cubic-bezier(.2,1.4,.4,1)}
-  .ring{fill:none;stroke-width:2;opacity:0}
-  .map.in .ring{animation:ring 2.6s ease-out infinite}
-  @keyframes ring{0%{opacity:.5;transform:scale(1);transform-box:fill-box;transform-origin:center}70%{opacity:0;transform:scale(2.8);transform-box:fill-box;transform-origin:center}100%{opacity:0}}
-  .plane{opacity:0}.map.in .plane{opacity:1;transition:opacity .8s .3s}
+/* reveal */
+.rv{opacity:0;transform:translateY(18px);transition:opacity .6s cubic-bezier(.2,.7,.2,1),transform .6s cubic-bezier(.2,.7,.2,1)}
+.rv.in{opacity:1;transform:none}
 
-  /* ---------- CITY CINEMATIC SECTIONS ---------- */
-  .city{position:relative;min-height:100svh;display:flex;align-items:center;overflow:hidden;
-    padding:clamp(80px,12vh,140px) 0}
-  .city-bg{position:absolute;inset:0;z-index:0;opacity:.14;will-change:transform}
-  .city-bg svg{position:absolute;bottom:-2%;left:0;width:120%;height:auto}
-  .city-num{position:absolute;z-index:0;font-weight:800;font-size:min(46vw,620px);line-height:.7;
-    opacity:.1;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;user-select:none}
-  .city-inner{position:relative;z-index:2;width:100%}
-  .city-head{margin-bottom:clamp(28px,5vw,50px)}
-  .city-idx{font-weight:200;font-size:clamp(60px,13vw,150px);line-height:.8;letter-spacing:-.03em}
-  .city-name{font-weight:800;font-size:clamp(40px,10vw,110px);letter-spacing:-.02em;line-height:.95;margin-top:-.1em}
-  .city-ko{font-weight:600;font-size:clamp(16px,3.4vw,22px);color:var(--ink-soft);margin-top:.7rem;letter-spacing:.05em}
-  .city-meta{display:flex;flex-wrap:wrap;gap:.6rem 1.4rem;margin-top:1rem;font-size:clamp(13px,2.7vw,15px);
-    color:var(--ink-soft);font-weight:600}
-  .city-meta b{font-weight:800}
-  .city-meta .pill{color:#fff;padding:.28em 1em;border-radius:999px;font-weight:700;letter-spacing:.04em;
-    text-shadow:0 1px 2px rgba(0,0,0,.2)}
-  /* timeline within city */
-  .tl{position:relative;max-width:760px}
-  .tl::before{content:"";position:absolute;left:7px;top:8px;bottom:12px;width:2px;
-    background:linear-gradient(currentColor,transparent);opacity:.3}
-  .tl-day{position:relative;padding-left:clamp(34px,5vw,56px);padding-bottom:clamp(26px,4vw,42px)}
-  .tl-day:last-child{padding-bottom:0}
-  .tl-dot{position:absolute;left:0;top:4px;width:16px;height:16px;border-radius:50%;background:currentColor;
-    border:3px solid var(--cream);box-shadow:0 0 0 1.5px currentColor;transform:scale(0);transition:transform .5s cubic-bezier(.2,1.5,.4,1)}
-  .tl-day.in .tl-dot{transform:scale(1)}
-  .tl-label{display:flex;flex-wrap:wrap;align-items:baseline;gap:.5rem .9rem;margin-bottom:.9rem}
-  .tl-n{font-weight:800;font-size:clamp(15px,3vw,18px)}
-  .tl-date{font-weight:700;font-size:clamp(14px,2.8vw,16px);color:var(--ink)}
-  .tl-tag{font-size:clamp(10px,2.2vw,11px);text-transform:uppercase;letter-spacing:.12em;color:#fff;
-    padding:.3em .85em;border-radius:999px;font-weight:700;background:currentColor}
-  .tl-tag span{color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.2)}
-  .tl-plan{display:grid;grid-template-columns:auto 1fr;gap:.5rem 1.2rem}
-  .t{font-weight:700;font-size:clamp(15px,2.9vw,18px);white-space:nowrap;padding-top:.05em}
-  .a{font-size:clamp(14.5px,2.9vw,16.5px);color:var(--ink);line-height:1.55;opacity:0;transform:translateY(10px)}
-  .tl-day.in .a{opacity:1;transform:none;transition:opacity .5s ease,transform .5s ease}
-  .a b{font-weight:800}
-  .a .note{display:inline-block;font-size:.82em;color:var(--roma);margin-left:.4em;font-weight:700}
-  .flight{font-weight:800}
-  @media(max-width:560px){.tl-plan{grid-template-columns:1fr;gap:.1rem}.t{padding-top:.55rem}}
+/* ============ STATS ============ */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:0 var(--pad)}
+.stat{background:var(--bg-sub);border:1px solid var(--line);border-radius:var(--r-md);padding:13px 6px;
+  text-align:center}
+.stat b{display:block;font-size:22px;font-weight:800;letter-spacing:-.04em;line-height:1;
+  font-variant-numeric:tabular-nums}
+.stat b small{font-size:.5em;font-weight:700;margin-left:1px}
+.stat span{display:block;font-size:11.5px;color:var(--t3);margin-top:5px;font-weight:600}
+.stat:nth-child(1) b{color:var(--roma)}.stat:nth-child(2) b{color:var(--firenze)}
+.stat:nth-child(3) b{color:var(--venezia)}.stat:nth-child(4) b{color:var(--milano)}
 
-  /* ---------- RESERVE ---------- */
-  .reserve{padding:clamp(80px,12vh,140px) 0;background:radial-gradient(120% 100% at 50% 0%,#1a5f78,#0b1f33);
-    color:#eaf4fa;text-align:center}
-  .reserve .kicker{color:var(--lemon)}.reserve .h2{color:#fff}
-  .res-label{text-align:center;font-size:.85rem;letter-spacing:.18em;color:var(--lemon);text-transform:uppercase;
-    font-weight:700;margin:3rem 0 1.1rem}
-  .res-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem;max-width:940px;margin:0 auto}
-  .res-card{display:flex;gap:.9rem;text-align:left;background:rgba(255,255,255,.12);
-    border:1px solid rgba(255,255,255,.28);border-radius:16px;padding:1.15rem 1.35rem;backdrop-filter:blur(4px);
-    transition:transform .35s,background .35s,box-shadow .35s;opacity:0;transform:translateY(24px) scale(.96)}
-  .res-card.in{opacity:1;transform:none;transition:opacity .6s,transform .6s cubic-bezier(.2,1.2,.4,1)}
-  .res-card:hover{transform:translateY(-5px);background:rgba(255,255,255,.19);box-shadow:0 18px 36px -20px rgba(0,0,0,.5)}
-  .res-card.soft{background:rgba(255,255,255,.07);border-style:dashed}
-  .res-card .b{font-size:1.5rem;flex-shrink:0}
-  .res-card .k{display:block;font-weight:700;font-size:1.05rem;color:#fff}
-  .res-card .dd{display:block;font-size:.78rem;color:var(--lemon);font-weight:700;letter-spacing:.03em;margin:.15rem 0}
-  .res-card .s{display:block;font-size:.85rem;color:#e9f6fb;line-height:1.5;opacity:.92}
-  .res-foot{margin-top:2rem;font-size:.84rem;color:#d6ecf3;opacity:.9}.res-foot b{color:var(--lemon)}
+/* ============ CAROUSEL (city cards) ============ */
+.rail{display:flex;gap:12px;overflow-x:auto;padding:2px var(--pad) 18px;scroll-snap-type:x mandatory;
+  scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.rail::-webkit-scrollbar{display:none}
+.citycard{flex:0 0 78%;max-width:300px;scroll-snap-align:start;border-radius:var(--r-lg);overflow:hidden;
+  position:relative;background:var(--card);box-shadow:var(--sh-1);border:1px solid var(--line);
+  transition:transform .25s cubic-bezier(.2,.9,.3,1)}
+.citycard:active{transform:scale(.975)}
+.citycard .ph{position:relative;aspect-ratio:4/3;overflow:hidden;background:var(--chip)}
+.citycard .ph img{width:100%;height:100%;object-fit:cover;transition:transform .5s}
+.citycard:hover .ph img{transform:scale(1.05)}
+.citycard .ph::after{content:"";position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(0,0,0,.30) 0%,transparent 40%,rgba(0,0,0,.60) 100%)}
+.citycard .num{position:absolute;top:12px;left:12px;z-index:2;width:26px;height:26px;border-radius:50%;
+  display:grid;place-items:center;font-size:12.5px;font-weight:800;color:#fff;
+  box-shadow:0 2px 10px rgba(0,0,0,.3)}
+.citycard .nights{position:absolute;top:12px;right:12px;z-index:2;font-size:11.5px;font-weight:700;color:#fff;
+  background:rgba(0,0,0,.42);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+  padding:4px 9px;border-radius:999px}
+.citycard .cap{position:absolute;left:14px;right:14px;bottom:12px;z-index:2;color:#fff}
+.citycard .cap .lat{font-size:22px;font-weight:800;letter-spacing:-.03em;line-height:1.1;
+  text-shadow:0 2px 12px rgba(0,0,0,.4)}
+.citycard .cap .ko{font-size:12.5px;font-weight:600;opacity:.92;margin-top:1px}
+.citycard .info{padding:12px 14px 14px}
+.citycard .info .dt{font-size:12.5px;font-weight:700;color:var(--t2)}
+.citycard .info .ht{font-size:12.5px;color:var(--t3);margin-top:4px;display:flex;gap:5px;align-items:flex-start}
+.citycard .info .tags{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
+.citycard .info .tags span{font-size:11px;font-weight:600;padding:4px 8px;border-radius:6px}
 
-  /* ---------- BUDGET ---------- */
-  .budget{padding:clamp(80px,12vh,140px) 0}
-  .btable{max-width:780px;margin:2.6rem auto 0;border-top:2px solid var(--ink)}
-  .brow{display:grid;grid-template-columns:1fr auto;gap:1rem;align-items:baseline;padding:1.15rem .3rem;border-bottom:1px solid var(--line)}
-  .brow .name{font-weight:700;font-size:clamp(16px,3vw,19px)}
-  .brow .desc{display:block;font-size:.78rem;color:var(--ink-soft);font-weight:400;margin-top:.15rem}
-  .brow .amt{font-weight:300;font-size:clamp(20px,3.6vw,28px);white-space:nowrap}
-  .brow .amt::after{content:" ₩";font-size:.55em;color:var(--firenze)}
-  .brow.flight .name{color:var(--roma)}
-  .brow-anim{opacity:0;transform:translateX(-24px);transition:opacity .6s cubic-bezier(.2,.7,.2,1),transform .6s cubic-bezier(.2,.7,.2,1)}
-  .brow-anim.in{opacity:1;transform:none}
-  .btotal{display:grid;grid-template-columns:1fr auto;align-items:baseline;padding:1.6rem .3rem;border-top:2px solid var(--ink);margin-top:.2rem}
-  .btotal .name{font-weight:300;font-size:clamp(22px,4vw,32px)}
-  .btotal .amt{font-weight:300;font-size:clamp(30px,6.5vw,52px);color:var(--roma)}
-  .btotal .amt::after{content:" ₩";font-size:.45em;color:var(--firenze)}
-  .bnote{display:flex;align-items:center;gap:1rem;max-width:780px;margin:1.4rem auto 0;text-align:left;
-    background:linear-gradient(135deg,rgba(230,178,62,.16),rgba(230,178,62,.06));
-    border:1px solid rgba(230,178,62,.4);border-radius:16px;padding:1.1rem 1.4rem}
-  .bnote .bi{font-size:1.7rem;flex-shrink:0}
-  .bnote .bt-k{display:block;font-weight:700;font-size:clamp(15px,3vw,18px);color:var(--ink)}
-  .bnote .bt-s{display:block;font-size:.82rem;color:var(--ink-soft);margin-top:.15rem}
-  .bnote .bt-amt{margin-left:auto;font-weight:300;font-size:clamp(20px,4vw,30px);color:var(--firenze);white-space:nowrap}
-  .bnote .bt-amt::after{content:" ₩";font-size:.5em}
-  @media(max-width:560px){.bnote{flex-wrap:wrap}.bnote .bt-amt{margin-left:0;width:100%}}
+/* ============ MAP ============ */
+.mapbox{margin:0 var(--pad);border-radius:var(--r-lg);overflow:hidden;border:1px solid var(--line);
+  box-shadow:var(--sh-1)}
+#realmap{height:300px;width:100%;background:var(--bg-sub);z-index:1}
+.leaflet-container{font-family:inherit;background:var(--bg-sub)}
+.leaflet-popup-content-wrapper{border-radius:12px;box-shadow:var(--sh-2);background:var(--card);color:var(--t1)}
+.leaflet-popup-tip{background:var(--card)}
+.leaflet-popup-content{margin:10px 14px;line-height:1.45}
+.pop-t{font-weight:800;font-size:14.5px;letter-spacing:-.02em}
+.pop-s{color:var(--t3);font-size:12px;margin-top:1px}
+.city-pin{display:grid;place-items:center;border-radius:50%;color:#fff;font-weight:800;font-size:12px;
+  border:2.5px solid #fff;box-shadow:0 2px 10px rgba(0,0,0,.28)}
+.legend{display:flex;flex-wrap:wrap;gap:8px 14px;padding:14px var(--pad) 0;justify-content:center}
+.legend span{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--t2);font-weight:600}
+.legend i{width:9px;height:9px;border-radius:50%}
 
-  /* ---------- TRANSIT (trains + flights) ---------- */
-  .transit{padding:clamp(80px,12vh,140px) 0;background:linear-gradient(180deg,#0c1d31,#0e2036)}
-  .transit .kicker{color:var(--venezia)}
-  .leg-grid{max-width:820px;margin:2.6rem auto 0;display:flex;flex-direction:column;gap:1rem}
-  .leg{display:grid;grid-template-columns:auto 1fr auto;gap:.35rem 1.1rem;align-items:center;
-    background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:1.15rem 1.35rem;text-align:left;
-    transition:transform .35s cubic-bezier(.2,1.2,.4,1),box-shadow .35s,border-color .35s}
-  .leg:hover{transform:translateY(-4px);box-shadow:0 16px 34px -20px rgba(0,0,0,.6);border-color:rgba(75,176,209,.5)}
-  .leg .ico{font-size:1.5rem;grid-row:span 2}
-  .leg .route{font-weight:800;font-size:clamp(15px,3vw,18px);letter-spacing:-.01em}
-  .leg .route .arr{color:var(--venezia);margin:0 .4em;font-weight:700}
-  .leg .sub{font-size:.82rem;color:var(--ink-soft);grid-column:2}
-  .leg .meta{grid-column:3;grid-row:span 2;text-align:right;font-size:.8rem;color:var(--ink-soft);line-height:1.5;white-space:nowrap}
-  .leg .meta b{display:block;font-weight:800;font-size:clamp(15px,2.8vw,17px);color:var(--ink)}
-  .leg.air{border-color:rgba(224,122,79,.5);background:linear-gradient(135deg,rgba(224,122,79,.14),rgba(224,122,79,.04))}
-  .leg.air .route .arr{color:var(--roma)}
-  .leg .fill{color:var(--lemon);font-weight:700;border-bottom:1px dashed rgba(244,197,66,.5)}
-  @media(max-width:560px){.leg{grid-template-columns:auto 1fr}.leg .meta{grid-column:1/-1;grid-row:auto;text-align:left;margin-top:.4rem}.leg .ico{grid-row:auto}}
+/* ============ DAY PICKER ============ */
+.daypick{display:flex;gap:7px;overflow-x:auto;padding:0 var(--pad) 4px;scrollbar-width:none}
+.daypick::-webkit-scrollbar{display:none}
+.daypick button{flex:0 0 auto;border-radius:var(--r-md);border:1px solid var(--line);background:var(--card);
+  padding:8px 12px;text-align:center;transition:.2s;min-width:62px}
+.daypick button b{display:block;font-size:13px;font-weight:800;letter-spacing:-.02em}
+.daypick button span{display:block;font-size:10.5px;color:var(--t3);margin-top:1px;font-weight:600}
+.daypick button.on{background:var(--t1);border-color:var(--t1);color:var(--bg)}
+.daypick button.on span{color:var(--bg);opacity:.7}
 
-  /* ---------- LOGISTICS (hotels + info) ---------- */
-  .logi{padding:clamp(80px,12vh,140px) 0}
-  .logi .kicker{color:var(--milano)}
-  .logi-grid{max-width:900px;margin:2.6rem auto 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem}
-  .logi-card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:1.25rem 1.4rem;text-align:left;
-    transition:transform .35s cubic-bezier(.2,1.2,.4,1),box-shadow .35s,border-color .35s}
-  .logi-card:hover{transform:translateY(-4px);box-shadow:0 16px 34px -20px rgba(0,0,0,.6);border-color:rgba(209,122,160,.5)}
-  .logi-card .ct{font-weight:800;font-size:1.02rem;color:var(--ink);display:flex;align-items:center;gap:.5rem}
-  .logi-card .cc{color:var(--milano);font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin:.4rem 0 .7rem}
-  .logi-card .row{display:flex;gap:.6rem;font-size:.86rem;color:var(--ink-soft);line-height:1.5;padding:.28rem 0}
-  .logi-card .row .rk{color:var(--ink);font-weight:700;flex-shrink:0;min-width:52px}
-  .logi-card .fill{color:var(--lemon);font-weight:600;border-bottom:1px dashed rgba(244,197,66,.45)}
+/* ============ DAY CARDS ============ */
+.days{padding:14px var(--pad) 4px;display:flex;flex-direction:column;gap:12px}
+.day{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;
+  box-shadow:var(--sh-1)}
+.day-hd{display:flex;align-items:center;gap:11px;padding:14px 16px;width:100%;text-align:left}
+.day-badge{flex:0 0 auto;width:42px;height:42px;border-radius:12px;display:grid;place-items:center;
+  font-weight:800;line-height:1;font-size:15px;color:#fff}
+.day-badge small{display:block;font-size:8.5px;letter-spacing:.1em;font-weight:700;opacity:.85;margin-bottom:1px}
+.day-hd .meta{flex:1;min-width:0}
+.day-hd .meta .dt{font-size:14.5px;font-weight:800;letter-spacing:-.025em}
+.day-hd .meta .ci{font-size:12.5px;color:var(--t3);margin-top:2px;display:flex;align-items:center;gap:6px;
+  flex-wrap:wrap}
+.day-hd .meta .ci em{font-style:normal;font-weight:700;padding:2px 7px;border-radius:6px;font-size:11px}
+.chev{flex:0 0 auto;color:var(--t3);transition:transform .3s}
+.day.open .chev{transform:rotate(180deg)}
+.day-body{display:grid;grid-template-rows:0fr;transition:grid-template-rows .34s cubic-bezier(.3,.9,.3,1)}
+.day.open .day-body{grid-template-rows:1fr}
+.day-body>div{overflow:hidden}
+.day-inner{padding:0 16px 16px}
+.dphotos{display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;margin:0 -16px 14px;padding:0 16px}
+.dphotos::-webkit-scrollbar{display:none}
+.dphotos figure{flex:0 0 auto;width:132px;border-radius:12px;overflow:hidden;position:relative;background:var(--chip)}
+.dphotos img{width:132px;height:92px;object-fit:cover}
+.dphotos figcaption{position:absolute;left:0;right:0;bottom:0;padding:14px 8px 6px;color:#fff;font-size:11px;
+  font-weight:700;background:linear-gradient(transparent,rgba(0,0,0,.72));letter-spacing:-.01em}
+.tl{position:relative;padding-left:16px}
+.tl::before{content:"";position:absolute;left:3.5px;top:8px;bottom:8px;width:2px;border-radius:2px;
+  background:var(--line-strong)}
+.tl-row{position:relative;display:grid;grid-template-columns:52px 1fr;gap:10px;padding:6px 0;align-items:start}
+.tl-row::before{content:"";position:absolute;left:-16px;top:12px;width:9px;height:9px;border-radius:50%;
+  background:var(--bg);border:2.5px solid currentColor}
+.tl-row .tm{font-size:12.5px;font-weight:800;color:var(--t3);font-variant-numeric:tabular-nums;padding-top:1px;
+  letter-spacing:-.02em}
+.tl-row .ac{font-size:14px;color:var(--t1);line-height:1.5}
+.tl-row .ac b{font-weight:800}
+.tl-row.key::before{background:currentColor;box-shadow:0 0 0 3px color-mix(in srgb, currentColor 18%, transparent)}
+.tl-row.key .tm{color:currentColor}
+.note{display:inline-block;font-size:11.5px;font-weight:700;padding:2px 7px;border-radius:6px;margin-left:5px;
+  background:var(--warn-weak);color:var(--warn);vertical-align:1px}
+.flight{font-weight:800}
 
-  /* ---------- PACKING ---------- */
-  .pack{padding:clamp(80px,12vh,140px) 0;background:linear-gradient(180deg,#0e2036,#0c1d31)}
-  .pack .kicker{color:var(--firenze)}
-  .pack-grid{max-width:900px;margin:2.6rem auto 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:1rem}
-  .pack-col{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:1.25rem 1.4rem;text-align:left}
-  .pack-col h4{font-weight:800;font-size:1rem;color:var(--firenze);margin-bottom:.8rem;display:flex;align-items:center;gap:.5rem}
-  .pack-col ul{list-style:none;display:flex;flex-direction:column;gap:.5rem}
-  .pack-col li{font-size:.88rem;color:var(--ink);line-height:1.45;padding-left:1.5rem;position:relative;cursor:pointer;user-select:none;transition:color .2s,opacity .2s}
-  .pack-col li::before{content:"\2610";position:absolute;left:0;top:-.05em;color:var(--ink-soft);font-size:1.05em;transition:color .2s}
-  .pack-col li:hover::before{color:var(--firenze)}
-  .pack-col li.done{color:var(--ink-soft);opacity:.55;text-decoration:line-through;text-decoration-color:var(--ink-soft)}
-  .pack-col li.done::before{content:"\2611";color:var(--firenze)}
-  .pack-col li.done b{color:var(--ink-soft);text-decoration:line-through}
-  .pack-col li b{color:var(--lemon);font-weight:700}
-  .pack-col li .hint{display:block;font-size:.76rem;color:var(--ink-soft);margin-top:.1rem;text-decoration:none}
+/* ============ RESERVE ============ */
+.rescards{padding:0 var(--pad);display:flex;flex-direction:column;gap:10px}
+.res{display:flex;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:var(--r-md);
+  padding:14px;box-shadow:var(--sh-1);position:relative;overflow:hidden}
+.res::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--brand)}
+.res.must::before{background:var(--warn)}
+.res .emo{flex:0 0 auto;width:38px;height:38px;border-radius:11px;display:grid;place-items:center;font-size:19px;
+  background:var(--bg-sub)}
+.res .bd{display:block;flex:1;min-width:0}
+.res .tt{font-size:14.5px;font-weight:800;letter-spacing:-.025em;display:flex;align-items:center;
+  gap:6px;flex-wrap:wrap}
+.res .pri{font-size:10px;font-weight:800;letter-spacing:.05em;padding:2px 6px;border-radius:5px;
+  background:var(--warn-weak);color:var(--warn);text-transform:uppercase}
+.res .wh{display:block;font-size:12px;font-weight:700;color:var(--brand);margin-top:3px}
+.res .ds{display:block;font-size:13px;color:var(--t2);margin-top:6px;line-height:1.55}
+.res-note{margin:14px var(--pad) 0;background:var(--brand-weak);border-radius:var(--r-md);padding:12px 14px;
+  font-size:12.5px;color:var(--t2);line-height:1.6}
+.res-note b{color:var(--brand-ink);font-weight:800}
+.sublabel{padding:18px var(--pad) 10px;font-size:12.5px;font-weight:800;color:var(--t3);letter-spacing:.02em}
 
-  @media(max-width:560px){
-    .pack-col li{padding-top:.35rem;padding-bottom:.35rem}
-    .pack-col ul{gap:.3rem}
-    .leg .meta{font-size:.82rem}
-  }
+/* ============ BUDGET ============ */
+.budget{padding:0 var(--pad)}
+.bcard{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh-1);
+  overflow:hidden}
+.brow{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:14px 16px;
+  border-bottom:1px solid var(--line)}
+.brow .nm{font-size:14px;font-weight:700;letter-spacing:-.02em}
+.brow .ds{display:block;font-size:11.5px;color:var(--t3);font-weight:500;margin-top:2px;line-height:1.45}
+.brow .am{font-size:15px;font-weight:800;white-space:nowrap;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.brow .am::after{content:"원";font-size:.72em;font-weight:600;color:var(--t3);margin-left:2px}
+.bbar{grid-column:1/-1;height:4px;border-radius:99px;background:var(--chip);overflow:hidden;margin-top:2px}
+.bbar i{display:block;height:100%;width:0;border-radius:99px;transition:width 1s cubic-bezier(.2,.8,.2,1)}
+.btotal{display:grid;grid-template-columns:1fr auto;align-items:center;padding:16px;background:var(--bg-sub)}
+.btotal .nm{font-size:13.5px;font-weight:700;color:var(--t2)}
+.btotal .am{font-size:24px;font-weight:800;letter-spacing:-.04em;color:var(--brand);
+  font-variant-numeric:tabular-nums}
+.btotal .am::after{content:"원";font-size:.55em;font-weight:700;color:var(--t3);margin-left:2px}
+.bnote{margin-top:10px;display:flex;align-items:center;gap:12px;background:var(--firenze-weak);
+  border-radius:var(--r-md);padding:13px 15px}
+.bnote .emo{font-size:20px}
+.bnote .bd{flex:1;min-width:0}
+.bnote b{display:block;font-size:13.5px;font-weight:800;letter-spacing:-.02em}
+.bnote span{display:block;font-size:11.5px;color:var(--t2);margin-top:2px;line-height:1.45}
+.bnote .am{font-size:15px;font-weight:800;white-space:nowrap;font-variant-numeric:tabular-nums}
+.bnote .am::after{content:"원";font-size:.72em;font-weight:600;color:var(--t3);margin-left:2px}
 
-  /* ---------- FOOTER ---------- */
-  .foot{position:relative;padding:clamp(90px,14vh,170px) 24px clamp(60px,9vh,90px);text-align:center;
-    background:linear-gradient(180deg,#0e2036,#0a1826);overflow:hidden}
-  .foot .amore{font-weight:800;font-size:clamp(40px,10vw,92px);color:var(--venezia);letter-spacing:-.02em}
-  .foot .heart{display:inline-block;color:#e87e8e;animation:beat 1.8s ease-in-out infinite;font-size:1.3rem;margin-top:1rem}
-  .foot-names{font-weight:700;letter-spacing:.18em;font-size:clamp(15px,3.4vw,20px);color:var(--ink);margin-top:1.1rem}
-  @keyframes beat{0%,100%{transform:scale(1)}12%{transform:scale(1.25)}24%{transform:scale(1)}36%{transform:scale(1.18)}}
-  .disc{font-size:11.5px;color:var(--ink-soft);margin-top:2.4rem;line-height:1.9;opacity:.8}
+/* ============ TRANSIT ============ */
+.legs{padding:0 var(--pad);display:flex;flex-direction:column;gap:10px}
+.leg{background:var(--card);border:1px solid var(--line);border-radius:var(--r-md);padding:14px;
+  box-shadow:var(--sh-1)}
+.leg.air{border-color:color-mix(in srgb, var(--roma) 32%, var(--line));background:var(--roma-weak)}
+.leg-top{display:flex;align-items:center;gap:9px;margin-bottom:9px}
+.leg-top .emo{font-size:17px}
+.leg-top .rt{font-size:14.5px;font-weight:800;letter-spacing:-.025em;flex:1;min-width:0}
+.leg-top .rt .arr{color:var(--brand);margin:0 4px;font-weight:700}
+.leg.air .leg-top .rt .arr{color:var(--roma)}
+.leg-top .kind{font-size:10.5px;font-weight:800;letter-spacing:.06em;padding:3px 7px;border-radius:5px;
+  background:var(--chip);color:var(--t2);text-transform:uppercase}
+.leg.air .leg-top .kind{background:var(--roma);color:#fff}
+.leg .sub{font-size:12.5px;color:var(--t3);line-height:1.5}
+.leg .grid{display:grid;grid-template-columns:1fr auto;gap:6px 12px;margin-top:10px;padding-top:10px;
+  border-top:1px dashed var(--line-strong);align-items:baseline}
+.leg .grid .k{font-size:13.5px;font-weight:700;letter-spacing:-.02em}
+.leg .grid .v{font-size:12.5px;color:var(--t2);text-align:right;font-weight:600}
+.fill{color:var(--warn);font-weight:800;border-bottom:1.5px dashed color-mix(in srgb, var(--warn) 45%, transparent)}
 
-  @media (prefers-reduced-motion:reduce){
-    *{animation-duration:.001s!important;transition-duration:.001s!important}
-    .reveal,.res-card,.a,.brow-anim{opacity:1!important;transform:none!important}
-    .tl-dot,.dot{transform:scale(1)!important}
-  }
+/* ============ HOTELS ============ */
+.hotels{padding:0 var(--pad);display:flex;flex-direction:column;gap:12px}
+.hotel{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;
+  box-shadow:var(--sh-1)}
+.hotel-hd{display:flex;gap:12px;padding:12px}
+.hotel-hd .th{flex:0 0 auto;width:86px;height:86px;border-radius:12px;overflow:hidden;background:var(--chip)}
+.hotel-hd .th img{width:100%;height:100%;object-fit:cover}
+.hotel-hd .bd{flex:1;min-width:0;display:flex;flex-direction:column}
+.hotel-hd .cy{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase}
+.hotel-hd .nm{font-size:15px;font-weight:800;letter-spacing:-.03em;margin-top:3px;line-height:1.3}
+.hotel-hd .dt{font-size:12px;color:var(--t3);margin-top:3px}
+.hotel-hd .pr{margin-top:auto;font-size:15px;font-weight:800;letter-spacing:-.03em;
+  font-variant-numeric:tabular-nums}
+.hotel-hd .pr::after{content:"원";font-size:.68em;font-weight:600;color:var(--t3);margin-left:1px}
+.hotel-rows{border-top:1px solid var(--line);padding:10px 14px 12px}
+.hrow{display:grid;grid-template-columns:56px 1fr;gap:10px;padding:4px 0;font-size:12.5px;line-height:1.5}
+.hrow .k{color:var(--t3);font-weight:700}
+.hrow .v{color:var(--t2)}
+
+/* ============ PACK ============ */
+.packs{padding:0 var(--pad);display:flex;flex-direction:column;gap:12px}
+.pack{background:var(--card);border:1px solid var(--line);border-radius:var(--r-lg);box-shadow:var(--sh-1);
+  overflow:hidden}
+.pack h4{display:flex;align-items:center;gap:8px;padding:13px 16px;font-size:14.5px;font-weight:800;
+  letter-spacing:-.025em;border-bottom:1px solid var(--line);background:var(--bg-sub)}
+.pack h4 .cnt{margin-left:auto;font-size:12px;font-weight:700;color:var(--t3);font-variant-numeric:tabular-nums}
+.pack ul{list-style:none;padding:6px 8px 10px}
+.pack li{display:flex;gap:10px;align-items:flex-start;padding:9px 8px;border-radius:10px;cursor:pointer;
+  transition:background .15s;user-select:none}
+.pack li:active{background:var(--bg-sub)}
+.pack li .box{flex:0 0 auto;width:19px;height:19px;border-radius:6px;border:2px solid var(--line-strong);
+  margin-top:1px;display:grid;place-items:center;transition:.18s}
+.pack li .box svg{width:11px;height:11px;opacity:0;transform:scale(.5);transition:.18s;color:#fff}
+.pack li.done .box{background:var(--brand);border-color:var(--brand)}
+.pack li.done .box svg{opacity:1;transform:none}
+.pack li .lb{flex:1;min-width:0;font-size:13.5px;line-height:1.45;transition:.18s}
+.pack li .lb b{font-weight:800}
+.pack li .lb .hint{display:block;font-size:11.5px;color:var(--t3);margin-top:2px;font-weight:500}
+.pack li.done .lb{color:var(--t3);text-decoration:line-through;text-decoration-color:var(--line-strong)}
+.pack li.done .lb b{color:var(--t3)}
+.pack li.done .lb .hint{text-decoration:none}
+.packbar{margin:0 var(--pad) 0;background:var(--card);border:1px solid var(--line);border-radius:var(--r-md);
+  padding:13px 15px;display:flex;align-items:center;gap:12px;box-shadow:var(--sh-1)}
+.packbar .bd{display:block;flex:1;min-width:0}
+.packbar b{display:block;font-size:13.5px;font-weight:800}
+.packbar .tr{display:block;height:6px;border-radius:99px;background:var(--chip);overflow:hidden;margin-top:7px}
+.packbar .tr i{display:block;height:100%;background:var(--brand);border-radius:99px;width:0;transition:width .35s}
+.packbar .pc{font-size:16px;font-weight:800;color:var(--brand);font-variant-numeric:tabular-nums}
+.reset{font-size:11.5px;font-weight:700;color:var(--t3);padding:5px 9px;border-radius:8px;background:var(--chip)}
+
+/* ============ FOOTER ============ */
+.foot{margin-top:34px;padding:44px var(--pad) 40px;text-align:center;background:var(--bg-sub);
+  border-top:1px solid var(--line)}
+.foot .it{font-size:30px;font-weight:800;letter-spacing:-.04em;
+  background:linear-gradient(100deg,var(--roma),var(--firenze),var(--venezia),var(--milano));
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.foot .hb{display:inline-block;color:#ff5d78;font-size:16px;margin-top:12px;animation:beat 1.9s ease-in-out infinite}
+.foot .nm{font-size:14.5px;font-weight:700;letter-spacing:.06em;margin-top:10px}
+.foot .disc{font-size:11.5px;color:var(--t3);margin-top:22px;line-height:1.8}
+
+/* ============ BOTTOM NAV ============ */
+.bnav{position:fixed;left:0;right:0;bottom:0;z-index:95;
+  background:color-mix(in srgb, var(--bg) 90%, transparent);
+  backdrop-filter:saturate(180%) blur(16px);-webkit-backdrop-filter:saturate(180%) blur(16px);
+  border-top:1px solid var(--line);padding-bottom:var(--safe-b)}
+.bnav-in{max-width:560px;margin:0 auto;display:grid;grid-template-columns:repeat(5,1fr);height:58px}
+.bnav a{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  color:var(--t3);transition:color .2s;font-size:10.5px;font-weight:700}
+.bnav a svg{width:21px;height:21px;transition:transform .2s}
+.bnav a.on{color:var(--brand)}
+.bnav a.on svg{transform:translateY(-1px) scale(1.06)}
+.bnav a:active svg{transform:scale(.9)}
+
+/* fab */
+.fab{position:fixed;right:calc(50% - 280px + 16px);bottom:calc(74px + var(--safe-b));z-index:94;
+  width:44px;height:44px;border-radius:50%;background:var(--t1);color:var(--bg);display:grid;place-items:center;
+  box-shadow:var(--sh-2);opacity:0;transform:translateY(12px) scale(.9);pointer-events:none;transition:.3s}
+.fab.show{opacity:1;transform:none;pointer-events:auto}
+.fab svg{width:19px;height:19px}
+@media(max-width:600px){ .fab{right:16px} }
+
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:.001s!important;animation-iteration-count:1!important;transition-duration:.001s!important;
+    scroll-behavior:auto!important}
+  .rv{opacity:1!important;transform:none!important}
+  .hero-slides img{opacity:0}
+  .hero-slides img:nth-child(1){opacity:1}
+}
 </style>
 </head>
 <body>
-<div id="cityTint" aria-hidden="true"></div>
+<div class="app">
 
-<div id="loader">
-  <div class="l-flag"><span></span><span></span><span></span></div>
-  <div class="l-word">VIAGGIO DI NOZZE</div>
-  <div class="l-bar"><i></i></div>
-</div>
-
-<div class="progress" id="progress"></div>
-<nav class="navdots" id="navdots"></nav>
-<button class="totop" id="totop" aria-label="맨 위로">↑</button>
-
-<!-- ===== HERO ===== -->
-<header class="hero" id="top">
-  <div class="stars" id="stars"></div>
-  <div class="hero-scene" id="heroScene">
-    <svg viewBox="0 0 1440 300" preserveAspectRatio="xMidYMax meet" xmlns="http://www.w3.org/2000/svg">
-      <defs><linearGradient id="gf" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="#081521" stop-opacity=".9"/><stop offset="1" stop-color="#081521" stop-opacity="0"/>
-      </linearGradient></defs>
-      <circle cx="1150" cy="140" r="86" fill="#cfe0f0" opacity=".10"/><circle cx="1150" cy="140" r="46" fill="#e8eff7" opacity=".55"/><circle cx="1168" cy="132" r="46" fill="#0c1d31" opacity=".55"/>
-      <path d="M0,250 Q300,206 600,232 T1140,224 T1440,242 L1440,300 L0,300 Z" fill="#123049" opacity=".7"/>
-      <g fill="#07131f" fill-opacity=".92">
-        <rect x="116" y="200" width="6" height="50"/><ellipse cx="119" cy="193" rx="37" ry="19"/>
-        <rect x="172" y="214" width="5" height="36"/><ellipse cx="174" cy="207" rx="27" ry="14"/>
-        <path d="M220,250 L220,152 Q220,126 250,124 L356,124 Q384,126 384,152 L384,140 Q384,112 414,110 L446,110 Q476,112 476,150 L476,250 Z"/>
-        <g fill="#f2c264" fill-opacity=".55"><rect x="238" y="176" width="13" height="24" rx="6"/><rect x="262" y="176" width="13" height="24" rx="6"/><rect x="286" y="176" width="13" height="24" rx="6"/><rect x="310" y="176" width="13" height="24" rx="6"/><rect x="334" y="176" width="13" height="24" rx="6"/><rect x="358" y="176" width="13" height="24" rx="6"/><rect x="404" y="164" width="13" height="24" rx="6"/><rect x="428" y="164" width="13" height="24" rx="6"/><rect x="452" y="164" width="13" height="24" rx="6"/></g>
-        <path d="M513,250 Q509,186 520,180 Q531,186 527,250 Z"/><path d="M535,250 Q531,172 543,166 Q555,172 551,250 Z"/><path d="M558,250 Q554,192 566,186 Q578,192 574,250 Z"/>
-        <rect x="628" y="150" width="34" height="100"/><rect x="623" y="142" width="44" height="10"/>
-        <rect x="686" y="198" width="72" height="52"/><rect x="700" y="176" width="44" height="24"/><path d="M700,178 Q722,120 744,178 Z"/><rect x="717" y="106" width="9" height="16"/><path d="M713,106 L730,106 L721,96 Z"/>
-        <rect x="892" y="118" width="34" height="132"/><rect x="887" y="110" width="44" height="10"/><path d="M892,110 L909,74 L926,110 Z"/><rect x="906" y="66" width="6" height="10"/>
-        <rect x="946" y="208" width="98" height="42"/><path d="M956,208 Q956,184 971,184 Q986,184 986,208 Z"/><path d="M986,208 Q986,186 1000,186 Q1014,186 1014,208 Z"/><path d="M1014,208 Q1014,184 1029,184 Q1044,184 1044,208 Z"/>
-        <path d="M958,250 Q1000,240 1042,250 Q1020,246 1000,246 Q980,246 958,250 Z"/>
-        <path d="M1120,250 L1120,202 L1136,202 L1142,178 L1148,202 L1162,202 L1168,170 L1174,202 L1188,202 L1196,182 L1204,202 L1218,202 L1226,150 L1234,202 L1248,202 L1256,182 L1264,202 L1278,202 L1284,170 L1290,202 L1304,202 L1310,178 L1316,202 L1332,202 L1332,250 Z"/>
-        <circle cx="1230" cy="146" r="3.4" fill="#f2c264"/>
-      </g>
-      <rect x="0" y="248" width="1440" height="52" fill="url(#gf)"/>
-    </svg>
-  </div>
-  <div class="hero-inner" id="heroInner">
-    <div class="flag"><span></span><span></span><span></span></div>
-    <div class="eyebrow">Viaggio di Nozze · Gennaio 2027</div>
-    <h1 class="title" aria-label="Italy">
-      <span class="d" style="animation-delay:.55s">I</span><span class="d" style="animation-delay:.64s">t</span><span class="d" style="animation-delay:.73s">a</span><span class="d" style="animation-delay:.82s">l</span><span class="d" style="animation-delay:.91s">y</span>
-    </h1>
-    <div class="title-ko">이탈리아 신혼여행</div>
-    <div class="names">구현지 <span>♥</span> 박진영</div>
-    <div class="rule"></div>
-    <div class="dates">16 — 25 January 2027</div>
-    <div class="route-top"><span class="r1">Roma</span><span class="sep">—</span><span class="r2">Firenze</span><span class="sep">—</span><span class="r3">Venezia</span><span class="sep">—</span><span class="r4">Milano</span></div>
-  </div>
-  <div class="cue"><span>Scroll</span><span class="ln"></span></div>
+<!-- ===== HEADER ===== -->
+<header class="hdr" id="hdr">
+  <span class="brand"><span class="tricolor"><i></i><i></i><i></i></span>이탈리아 신혼여행</span>
+  <span class="spacer"></span>
+  <button class="icon-btn" id="shareBtn" aria-label="공유하기">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/></svg>
+  </button>
 </header>
 
+<!-- ===== HERO ===== -->
+<div class="hero">
+  <div class="hero-slides" aria-hidden="true">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/de/Colosseo_2020.jpg/1280px-Colosseo_2020.jpg" alt="" fetchpriority="high">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c7/Cattedrale_di_Santa_Maria_del_Fiore_%E2%80%93_Il_Duomo_di_Firenze.jpg/1280px-Cattedrale_di_Santa_Maria_del_Fiore_%E2%80%93_Il_Duomo_di_Firenze.jpg" alt="" loading="lazy">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/View_of_the_Grand_Canal_from_Rialto_to_Ca%27Foscari.jpg/1280px-View_of_the_Grand_Canal_from_Rialto_to_Ca%27Foscari.jpg" alt="" loading="lazy">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/70/Milan_Cathedral_from_Piazza_del_Duomo.jpg/1280px-Milan_Cathedral_from_Piazza_del_Duomo.jpg" alt="" loading="lazy">
+  </div>
+  <div class="hero-body">
+    <span class="hero-eyebrow">Viaggio di Nozze · Gennaio 2027</span>
+    <h1><em>Italy</em>이탈리아 신혼여행</h1>
+    <div class="hero-names">구현지 <span class="hb">♥</span> 박진영</div>
+    <div class="hero-chips">
+      <span>2027.1.16 – 1.25</span><span>8박 10일</span><span>로마 IN · 밀라노 OUT</span>
+    </div>
+    <div class="hero-route">
+      <span>로마</span><i>›</i><span>피렌체</span><i>›</i><span>베니스</span><i>›</i><span>밀라노</span>
+    </div>
+  </div>
+</div>
+
+<!-- D-DAY -->
+<div class="dday" id="ddayCard">
+  <div class="dday-num" id="ddayNum">D-<small>—</small></div>
+  <div class="dday-txt">
+    <b id="ddayTitle">출발까지</b>
+    <span id="ddaySub">2027년 1월 16일 (토) · KE931 14:05</span>
+  </div>
+</div>
+<div class="nightbar">
+  <div class="tr" id="nightTrack"></div>
+  <div class="lg" id="nightLegend"></div>
+</div>
+
+<!-- ===== TABS ===== -->
+<nav class="tabs">
+  <div class="tabs-scroll" id="tabs">
+    <a href="#s-overview">개요</a>
+    <a href="#s-cities">도시</a>
+    <a href="#s-map">지도</a>
+    <a href="#s-days">일정</a>
+    <a href="#s-reserve">예약</a>
+    <a href="#s-budget">예산</a>
+    <a href="#s-transit">이동</a>
+    <a href="#s-hotel">숙소</a>
+    <a href="#s-pack">준비물</a>
+  </div>
+</nav>
+
 <!-- ===== OVERVIEW ===== -->
-<section class="overview">
-  <div class="wrap" style="text-align:center">
-    <div class="kicker reveal">A Glance</div>
-    <div class="h2 reveal d1">한눈에 보는 여정</div>
-    <p class="lead reveal d2">로마 IN · 밀라노 OUT · 4개 도시 · 8박 10일</p>
-    <div class="ov-grid">
-      <div class="ov reveal"><span class="ov-n">10<small>일</small></span><span class="ov-l">Giorni · 여정</span></div>
-      <div class="ov reveal d1"><span class="ov-n">4<small>도시</small></span><span class="ov-l">Città · 도시</span></div>
-      <div class="ov reveal d2"><span class="ov-n">8<small>박</small></span><span class="ov-l">Notti · 숙박</span></div>
-      <div class="ov reveal d3"><span class="ov-n">3<small>회</small></span><span class="ov-l">Treni · 고속열차</span></div>
-    </div>
+<section id="s-overview" class="sec">
+  <div class="sec-head rv">
+    <div class="sec-kicker">A Glance</div>
+    <h2 class="sec-title">한눈에 보는 여정</h2>
+    <p class="sec-sub">로마 IN · 밀라노 OUT · 4개 도시 · 8박 10일</p>
+  </div>
+  <div class="stats rv">
+    <div class="stat"><b>10<small>일</small></b><span>Giorni</span></div>
+    <div class="stat"><b>4<small>도시</small></b><span>Città</span></div>
+    <div class="stat"><b>8<small>박</small></b><span>Notti</span></div>
+    <div class="stat"><b>3<small>회</small></b><span>Treni</span></div>
   </div>
 </section>
 
-<!-- ===== JOURNEY MAP ===== -->
-<section class="journey">
-  <div class="wrap">
-    <div class="kicker reveal">Il Percorso</div>
-    <div class="h2 reveal d1">우리의 여정</div>
-    <div class="map" id="map">
-      <svg viewBox="0 -34 840 320" role="img" aria-label="로마에서 밀라노까지의 여정">
-        <defs><linearGradient id="grad" x1="0" y1="0" x2="840" y2="0" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stop-color="#e07a4f"/><stop offset=".34" stop-color="#e6b23e"/><stop offset=".67" stop-color="#4bb0d1"/><stop offset="1" stop-color="#d17aa0"/>
-        </linearGradient></defs>
-        <path class="path-bg" d="M85,195 C 210,195 210,125 335,125 C 450,125 445,160 560,160 C 660,160 650,80 755,80"/>
-        <path class="path-fg" id="routePath" d="M85,195 C 210,195 210,125 335,125 C 450,125 445,160 560,160 C 660,160 650,80 755,80"/>
-        <g id="movePlane" style="opacity:0"><circle r="14" fill="var(--lemon)" opacity=".25"/><text x="0" y="0" text-anchor="middle" dominant-baseline="central" font-size="28" fill="#fff" style="filter:drop-shadow(0 0 10px rgba(244,197,66,1))">✈</text></g>
-        <circle class="ring" style="animation-delay:.2s" cx="85" cy="195" r="9" stroke="#e07a4f"/>
-        <circle class="dot" style="transition-delay:.15s" cx="85" cy="195" r="9" fill="#e07a4f"/>
-        <text class="plane" x="85" y="168" text-anchor="middle" font-size="19" fill="#cdd8e2">✈</text>
-        <text class="sl" x="85" y="226" text-anchor="middle" fill="#eef2ea">Roma</text><text class="ss" x="85" y="247" text-anchor="middle">로마 · 1.16–19</text>
-        <circle class="ring" style="animation-delay:.8s" cx="335" cy="125" r="9" stroke="#e6b23e"/>
-        <circle class="dot" style="transition-delay:.45s" cx="335" cy="125" r="9" fill="#e6b23e"/>
-        <text class="sl" x="335" y="100" text-anchor="middle" fill="#eef2ea">Firenze</text><text class="ss" x="335" y="72" text-anchor="middle">피렌체 · 1.19–21</text>
-        <circle class="ring" style="animation-delay:1.4s" cx="560" cy="160" r="9" stroke="#4bb0d1"/>
-        <circle class="dot" style="transition-delay:.75s" cx="560" cy="160" r="9" fill="#4bb0d1"/>
-        <text class="sl" x="560" y="191" text-anchor="middle" fill="#eef2ea">Venezia</text><text class="ss" x="560" y="212" text-anchor="middle">베니스 · 1.21–23</text>
-        <circle class="ring" style="animation-delay:2s" cx="755" cy="80" r="9" stroke="#d17aa0"/>
-        <circle class="dot" style="transition-delay:1.05s" cx="755" cy="80" r="9" fill="#d17aa0"/>
-        <text class="plane" x="755" y="110" text-anchor="middle" font-size="19" fill="#cdd8e2">✈</text>
-        <text class="sl" x="755" y="55" text-anchor="middle" fill="#eef2ea">Milano</text><text class="ss" x="755" y="27" text-anchor="middle">밀라노 · 1.23–24</text>
-      </svg>
-    </div>
+<div class="divider"></div>
+
+<!-- ===== CITIES ===== -->
+<section id="s-cities" class="sec">
+  <div class="sec-head rv">
+    <div class="sec-kicker">Le Città</div>
+    <h2 class="sec-title">도시별 하이라이트</h2>
+    <p class="sec-sub">옆으로 넘겨서 4개 도시를 확인해 보세요</p>
+  </div>
+  <div class="rail" id="cityRail"></div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ===== MAP ===== -->
+<section id="s-map" class="sec">
+  <div class="sec-head rv">
+    <div class="sec-kicker">La Mappa</div>
+    <h2 class="sec-title">실제 지도로 보는 동선</h2>
+    <p class="sec-sub">로마에서 북쪽으로 올라가는 고속열차 루트</p>
+  </div>
+  <div class="mapbox rv"><div id="realmap"></div></div>
+  <div class="legend rv">
+    <span><i style="background:#e0512b"></i>로마 1.16–19</span>
+    <span><i style="background:#b8860b"></i>피렌체 1.19–21</span>
+    <span><i style="background:#0d8bb3"></i>베니스 1.21–23</span>
+    <span><i style="background:#b8477f"></i>밀라노 1.23–24</span>
   </div>
 </section>
 
-<!-- ===== REAL GEOGRAPHIC MAP ===== -->
-<section class="geomap">
-  <div class="wrap">
-    <div class="kicker reveal">La Mappa</div>
-    <div class="h2 reveal d1">실제 지도로 보는 동선</div>
-    <div class="geomap-wrap reveal d2">
-      <div id="realmap"></div>
-    </div>
-    <div class="map-legend reveal d2">
-      <span><i style="background:var(--roma)"></i>Roma 로마</span>
-      <span><i style="background:var(--firenze)"></i>Firenze 피렌체</span>
-      <span><i style="background:var(--venezia)"></i>Venezia 베니스</span>
-      <span><i style="background:var(--milano)"></i>Milano 밀라노</span>
-    </div>
+<div class="divider"></div>
+
+<!-- ===== DAYS ===== -->
+<section id="s-days" class="sec">
+  <div class="sec-head rv">
+    <div class="sec-kicker">L'Itinerario</div>
+    <h2 class="sec-title">하루하루 일정</h2>
+    <p class="sec-sub">카드를 눌러 펼치고 접을 수 있어요</p>
   </div>
+  <div class="daypick" id="dayPick"></div>
+  <div class="days" id="dayList"></div>
 </section>
 
-<!-- ===== CITY SECTIONS (injected) ===== -->
-<div id="cities"></div>
+<div class="divider"></div>
 
 <!-- ===== RESERVE ===== -->
-<section class="reserve" id="sec-reserve">
-  <div class="wrap">
-    <div class="kicker reveal">Da Prenotare</div>
-    <div class="h2 reveal d1">미리 예약할 것</div>
-    <div class="res-label reveal">필수 예약 · 시간 지정 · 매진 빠름</div>
-    <div class="res-grid" id="resReq"></div>
-    <div class="res-label reveal">추천 · 넣으면 좋은 것</div>
-    <div class="res-grid" id="resOpt"></div>
-    <div class="res-foot reveal">※ 우리는 1월 + 베니스 숙박이라 <b>베니스 입장료(Contributo di Accesso)</b>는 면제 대상이에요.</div>
+<section id="s-reserve" class="sec">
+  <div class="sec-head rv">
+    <div class="sec-kicker">Da Prenotare</div>
+    <h2 class="sec-title">미리 예약할 것</h2>
+    <p class="sec-sub">시간 지정 · 매진이 빠른 순서대로</p>
   </div>
+  <div class="sublabel">필수 예약</div>
+  <div class="rescards" id="resReq"></div>
+  <div class="sublabel">추천 · 넣으면 좋은 것</div>
+  <div class="rescards" id="resOpt"></div>
+  <div class="res-note rv">※ 우리는 1월 + 베니스 숙박이라 <b>베니스 입장료(Contributo di Accesso)</b>는 면제 대상이에요.</div>
 </section>
+
+<div class="divider"></div>
 
 <!-- ===== BUDGET ===== -->
-<section class="budget" id="sec-budget">
-  <div class="wrap" style="text-align:center">
-    <div class="kicker reveal">Il Budget</div>
-    <div class="h2 reveal d1">예산 계획표</div>
-    <p class="lead reveal d2">2인 기준 · 실제 지출 (KRW) · 로마 IN / 밀라노 OUT</p>
-    <div class="btable reveal" id="btable"></div>
+<section id="s-budget" class="sec">
+  <div class="sec-head rv">
+    <div class="sec-kicker">Il Budget</div>
+    <h2 class="sec-title">예산 계획표</h2>
+    <p class="sec-sub">2인 기준 · 실제 지출 (KRW)</p>
+  </div>
+  <div class="budget rv">
+    <div class="bcard" id="bcard"></div>
+    <div class="bnote">
+      <span class="emo">💶</span>
+      <span class="bd"><b>현지 경비 · 환전 완료</b><span>식사 · 입장권 · 쇼핑 · 투어 등 현지 지출용 (≈ €2,650)</span></span>
+      <span class="am">4,000,000</span>
+    </div>
   </div>
 </section>
+
+<div class="divider"></div>
 
 <!-- ===== TRANSIT ===== -->
-<section class="transit" id="sec-transit">
-  <div class="wrap" style="text-align:center">
-    <div class="kicker reveal">In Viaggio</div>
-    <div class="h2 reveal d1">이동 정보</div>
-    <p class="lead reveal d2">항공 2회 · 고속열차 3회 · 공항 이동</p>
-    <div class="leg-grid" id="legGrid"></div>
+<section id="s-transit" class="sec">
+  <div class="sec-head rv">
+    <div class="sec-kicker">In Viaggio</div>
+    <h2 class="sec-title">이동 정보</h2>
+    <p class="sec-sub">항공 2회 · 고속열차 3회 · 공항 이동</p>
   </div>
+  <div class="legs" id="legs"></div>
 </section>
 
-<!-- ===== LOGISTICS ===== -->
-<section class="logi" id="sec-logi">
-  <div class="wrap" style="text-align:center">
-    <div class="kicker reveal">Hotel &amp; Info</div>
-    <div class="h2 reveal d1">숙소 &amp; 실무 정보</div>
-    <p class="lead reveal d2">체크인/아웃 · 주소 · 예약번호는 확정되면 채우기</p>
-    <div class="logi-grid" id="logiGrid"></div>
+<div class="divider"></div>
+
+<!-- ===== HOTELS ===== -->
+<section id="s-hotel" class="sec">
+  <div class="sec-head rv">
+    <div class="sec-kicker">Hotel &amp; Info</div>
+    <h2 class="sec-title">숙소 &amp; 실무 정보</h2>
+    <p class="sec-sub">체크인/아웃 · 주소 · 위치</p>
   </div>
+  <div class="hotels" id="hotels"></div>
 </section>
 
-<!-- ===== PACKING ===== -->
-<section class="pack" id="sec-pack">
-  <div class="wrap" style="text-align:center">
-    <div class="kicker reveal">Checklist</div>
-    <div class="h2 reveal d1">준비물</div>
-    <p class="lead reveal d2">1월 이탈리아 · 겨울 · 8박 10일 기준</p>
-    <div class="pack-grid" id="packGrid"></div>
+<div class="divider"></div>
+
+<!-- ===== PACK ===== -->
+<section id="s-pack" class="sec">
+  <div class="sec-head rv">
+    <div class="sec-kicker">Checklist</div>
+    <h2 class="sec-title">준비물</h2>
+    <p class="sec-sub">1월 이탈리아 · 겨울 · 8박 10일 기준</p>
   </div>
+  <div class="packbar rv">
+    <span class="bd"><b id="packLabel">준비 완료</b><span class="tr"><i id="packTrack"></i></span></span>
+    <span class="pc" id="packPct">0%</span>
+    <button class="reset" id="packReset">초기화</button>
+  </div>
+  <div style="height:12px"></div>
+  <div class="packs" id="packs"></div>
 </section>
 
 <!-- ===== FOOTER ===== -->
 <footer class="foot">
-  <div class="reveal">
-    <div class="amore">Buon Viaggio</div>
-    <div class="heart">❤</div>
-    <div class="foot-names">구현지 &amp; 박진영</div>
-    <div class="disc">※ 본 일정은 대략적인 내용으로 작성한 1차 드래프트이며,<br>예약 상황이나 이동 동선에 따라 변경될 수 있습니다.</div>
-  </div>
+  <div class="it">Buon Viaggio</div>
+  <div class="hb">❤</div>
+  <div class="nm">구현지 &amp; 박진영</div>
+  <p class="disc">※ 본 일정은 대략적인 내용으로 작성한 1차 드래프트이며,<br>예약 상황이나 이동 동선에 따라 변경될 수 있습니다.<br><br>사진 출처: Wikimedia Commons</p>
 </footer>
 
+</div><!-- /.app -->
+
+<button class="fab" id="fab" aria-label="맨 위로">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+</button>
+
+<nav class="bnav">
+  <div class="bnav-in" id="bnav">
+    <a href="#top" data-sec="top">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.8V20h14V9.8"/></svg>홈</a>
+    <a href="#s-days" data-sec="s-days">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>일정</a>
+    <a href="#s-reserve" data-sec="s-reserve">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 000 4v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2a2 2 0 000-4z"/><path d="M12 7v2M12 13v2"/></svg>예약</a>
+    <a href="#s-budget" data-sec="s-budget">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 9.5c0-1.4 1.3-2.2 3-2.2s3 .6 3 2.1c0 2.6-6 1.4-6 4.1 0 1.5 1.3 2.2 3 2.2s3-.8 3-2.2"/><path d="M12 5.6v1.7M12 16.7v1.7"/></svg>예산</a>
+    <a href="#s-pack" data-sec="s-pack">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="14" rx="3"/><path d="M9 7V5a2 2 0 012-2h2a2 2 0 012 2v2"/><path d="M8.6 14.2l2.2 2.2 4.4-4.4"/></svg>준비물</a>
+  </div>
+</nav>
+
 <script>
-  const C={roma:'var(--roma)',firenze:'var(--firenze)',venezia:'var(--venezia)',milano:'var(--milano)'};
-  const HEX={roma:'#e07a4f',firenze:'#e6b23e',venezia:'#4bb0d1',milano:'#d17aa0'};
+/* ================= DATA ================= */
+const HEX={roma:'#e0512b',firenze:'#b8860b',venezia:'#0d8bb3',milano:'#b8477f'};
+const WEAK={roma:'var(--roma-weak)',firenze:'var(--firenze-weak)',venezia:'var(--venezia-weak)',milano:'var(--milano-weak)'};
+const W=1280, B='https://upload.wikimedia.org/wikipedia/commons/thumb/';
+const IMG={
+  colosseo:B+'d/de/Colosseo_2020.jpg/1280px-Colosseo_2020.jpg',
+  trevi:B+'c/c7/Trevi_Fountain_-_Roma.jpg/1280px-Trevi_Fountain_-_Roma.jpg',
+  vaticano:B+'f/f5/Basilica_di_San_Pietro_in_Vaticano_September_2015-1a.jpg/1280px-Basilica_di_San_Pietro_in_Vaticano_September_2015-1a.jpg',
+  pantheon:B+'7/7b/Pantheon_%28Rome%29_-_Right_side_and_front.jpg/1280px-Pantheon_%28Rome%29_-_Right_side_and_front.jpg',
+  navona:B+'0/08/Piazza_Navona_%28Rome%29_at_night.jpg/1280px-Piazza_Navona_%28Rome%29_at_night.jpg',
+  foro:B+'6/6a/Foro_Romano_Musei_Capitolini_Roma.jpg/1280px-Foro_Romano_Musei_Capitolini_Roma.jpg',
+  pompei:B+'f/f5/Aerial_image_of_Pompeii_and_Mount_Vesuvius_%28view_from_the_southeast%29.jpg/1280px-Aerial_image_of_Pompeii_and_Mount_Vesuvius_%28view_from_the_southeast%29.jpg',
+  positano:B+'9/9b/Positano_Sunset.JPG/1280px-Positano_Sunset.JPG',
+  amalfi:B+'3/3d/Amalfi_Coast_%28Italy%2C_October_2020%29_-_75_%2850558355441%29.jpg/1280px-Amalfi_Coast_%28Italy%2C_October_2020%29_-_75_%2850558355441%29.jpg',
+  duomo_fi:B+'c/c7/Cattedrale_di_Santa_Maria_del_Fiore_%E2%80%93_Il_Duomo_di_Firenze.jpg/1280px-Cattedrale_di_Santa_Maria_del_Fiore_%E2%80%93_Il_Duomo_di_Firenze.jpg',
+  pontevecchio:B+'7/7d/Ponte_Vecchio_from_Ponte_alle_Grazie.jpg/1280px-Ponte_Vecchio_from_Ponte_alle_Grazie.jpg',
+  siena:B+'2/20/Siena_Cattedrale_nuova_Vista_su_la_Piazza_del_Campo_2.jpg/1280px-Siena_Cattedrale_nuova_Vista_su_la_Piazza_del_Campo_2.jpg',
+  sangimignano:B+'d/d4/1_Aerial_pano_san_gimignano_%282%29a.jpg/1280px-1_Aerial_pano_san_gimignano_%282%29a.jpg',
+  canalgrande:B+"5/51/View_of_the_Grand_Canal_from_Rialto_to_Ca%27Foscari.jpg/1280px-View_of_the_Grand_Canal_from_Rialto_to_Ca%27Foscari.jpg",
+  rialto:B+'0/0b/Rialto_2025_4.jpg/1280px-Rialto_2025_4.jpg',
+  sanmarco:B+'1/17/Piazza_San_Marco_%28Venice%29_at_night-msu-2021-6449-.jpg/1280px-Piazza_San_Marco_%28Venice%29_at_night-msu-2021-6449-.jpg',
+  ducale:B+"0/00/%28Venice%29_Doge%27s_Palace_and_campanile_of_St._Mark%27s_Basilica_facing_the_sea.jpg/1280px-Doge%27s_Palace_and_campanile_of_St._Mark%27s_Basilica_facing_the_sea.jpg",
+  burano:B+'f/f8/Burano_Venice_17.jpg/1280px-Burano_Venice_17.jpg',
+  murano:B+'b/bb/Murano_sunset.JPG/1280px-Murano_sunset.JPG',
+  duomo_mi:B+'7/70/Milan_Cathedral_from_Piazza_del_Duomo.jpg/1280px-Milan_Cathedral_from_Piazza_del_Duomo.jpg',
+  galleria:B+'b/b6/Galleria_Milano_%28179532365%29.jpeg/1280px-Galleria_Milano_%28179532365%29.jpeg',
+  sforzesco:B+'7/7e/20110725_Castello_Sforzesco_Milan_5557.jpg/1280px-20110725_Castello_Sforzesco_Milan_5557.jpg',
+};
 
-  /* ---------- data ---------- */
-  const days=[
-    {n:1,date:'1월 16일 · 토',city:'로마 도착',r:'roma',plan:[['09:00','인천공항 출발'],['11:00','라운지 식사'],['14:05','<b class="flight">KE931 탑승</b> <span class="note">14:05 → 19:35 · FCO T3</span>'],['21:00','레오나르도 익스프레스 탑승'],['22:00','퀴리날레 호텔 체크인 · 저녁 휴식']]},
-    {n:2,date:'1월 17일 · 일',city:'로마',r:'roma',plan:[['09:00','트레비 분수 · 판테온 · 나보나 광장'],['12:00','점심식사'],['13:00','<b>바티칸 투어</b> 패스트트랙 <span class="note">예약 필수</span>'],['18:00','저녁식사'],['19:00','성 베드로 대성당'],['20:00','광장 야경'],['21:00','호텔 휴식']]},
-    {n:3,date:'1월 18일 · 월',city:'남부 투어',r:'roma',plan:[['08:00','<b>남부 투어</b> — 폼페이 · 포지타노 · 아말피'],['22:00','호텔 휴식']]},
-    {n:4,date:'1월 19일 · 화',city:'로마 → 피렌체',r:'firenze',plan:[['07:00','조식 · 퀴리날레 호텔 체크아웃 후 짐보관'],['09:00','콜로세움 · 포로 로마노 · 팔라티노 언덕'],['12:00','고속열차 · 점심식사'],['14:00','그랜드 호텔 바글리오니 체크인'],['15:00','두오모 성당 · 베키오 다리 · 미켈란젤로'],['19:00','저녁식사 <span class="note">티본스테이크</span>'],['20:00','미켈란젤로 광장 야경 · 호텔 휴식']]},
-    {n:5,date:'1월 20일 · 수',city:'토스카나',r:'firenze',plan:[['07:00','기상 및 준비'],['09:00','아침식사'],['10:00','<b>토스카나 투어</b> — 시에나 · 와이너리 · 산지미냐노'],['20:00','저녁식사'],['22:00','호텔 휴식']]},
-    {n:6,date:'1월 21일 · 목',city:'피렌체 → 베니스',r:'venezia',plan:[['07:00','그랜드 호텔 바글리오니 체크아웃 · 짐보관'],['09:00','아카데미아 미술관'],['12:00','중앙시장 + 점심'],['13:00','고속열차'],['17:00','레오나르도 로얄 호텔 베니스 메스트레 체크인'],['18:00','저녁식사'],['19:00','리알토 다리 · 대운하 야경'],['22:00','호텔 휴식']]},
-    {n:7,date:'1월 22일 · 금',city:'베니스',r:'venezia',plan:[['07:00','기상 및 아침식사'],['09:00','산 마르코 광장 · 대성당 · 두칼레 궁전'],['12:00','점심식사'],['13:00','무라노 · 부라노 섬'],['19:00','저녁식사'],['20:00','곤돌라 야경'],['22:00','호텔 휴식']]},
-    {n:8,date:'1월 23일 · 토',city:'베니스 → 밀라노',r:'milano',plan:[['07:00','기상 및 아침식사'],['09:00','레오나르도 로얄 호텔 체크아웃'],['10:00','고속열차'],['13:00','NYX 호텔 밀란 체크인 · 짐보관'],['13:30','점심식사'],['14:30','<b>최후의 만찬</b> <span class="note">예약 필수 · 30분 전 도착</span>'],['15:30','밀라노 <b>두오모 + 옥상</b> <span class="note">시간대 예약</span>'],['17:00','갤러리아 쇼핑'],['19:00','스포르체스코 성'],['21:00','저녁식사'],['22:00','호텔 휴식']]},
-    {n:9,date:'1월 24일 · 일',city:'밀라노 → 귀국',r:'milano',plan:[['07:00','기상 및 아침식사'],['09:00','NYX 호텔 밀란 체크아웃'],['10:00','밀라노 시내'],['15:00','공항 이동 및 체크인'],['20:05','<b class="flight">KE928 탑승</b> <span class="note">20:05 → 15:35 (+1) · MXP T1</span>']]},
-    {n:10,date:'1월 25일 · 월',city:'인천 도착',r:'milano',plan:[['15:35','인천공항 도착'],['16:00','집으로 귀가'],['18:00','휴식']]},
-  ];
-  const chapters=[
-    {r:'roma',idx:'01',lat:'Roma',ko:'로마',nights:'3박',dates:'1.16–1.19',hotel:'퀴리날레 호텔',tag:'ROMA'},
-    {r:'firenze',idx:'02',lat:'Firenze',ko:'피렌체',nights:'2박',dates:'1.19–1.21',hotel:'그랜드 호텔 바글리오니',tag:'FIRENZE'},
-    {r:'venezia',idx:'03',lat:'Venezia',ko:'베니스',nights:'2박',dates:'1.21–1.23',hotel:'레오나르도 로얄 (메스트레)',tag:'VENEZIA'},
-    {r:'milano',idx:'04',lat:'Milano',ko:'밀라노',nights:'1박',dates:'1.23–1.25',hotel:'NYX 호텔 밀란',tag:'MILANO'},
-  ];
-  // simple landmark motif per city for bg
-  const MOTIF={
-    roma:'<path d="M40,300 L40,150 Q40,120 80,116 L360,116 Q400,120 400,150 L400,300 Z"/><g fill="#fff" opacity=".5"><rect x="70" y="150" width="26" height="50" rx="12"/><rect x="120" y="150" width="26" height="50" rx="12"/><rect x="170" y="150" width="26" height="50" rx="12"/><rect x="220" y="150" width="26" height="50" rx="12"/><rect x="270" y="150" width="26" height="50" rx="12"/><rect x="320" y="150" width="26" height="50" rx="12"/></g>',
-    firenze:'<rect x="60" y="120" width="46" height="180"/><rect x="150" y="180" width="120" height="120"/><rect x="172" y="140" width="76" height="44"/><path d="M172,144 Q210,60 248,144 Z"/><rect x="203" y="96" width="14" height="24"/>',
-    venezia:'<rect x="80" y="60" width="46" height="240"/><path d="M80,60 L103,10 L126,60 Z"/><rect x="180" y="200" width="180" height="100"/><path d="M198,200 Q198,150 228,150 Q258,150 258,200 Z"/><path d="M258,200 Q258,155 286,155 Q314,155 314,200 Z"/><path d="M314,200 Q314,150 344,150 Q374,150 374,200 Z"/>',
-    milano:'<path d="M40,300 L40,210 L70,210 L82,150 L94,210 L124,210 L138,130 L152,210 L182,210 L198,90 L214,210 L244,210 L258,130 L272,210 L302,210 L314,150 L326,210 L356,210 L356,300 Z"/>',
-  };
+const days=[
+ {n:1,date:'1월 16일',dow:'토',city:'로마 도착',r:'roma',pics:[],plan:[
+   ['09:00','인천공항 출발'],['11:00','라운지 식사'],
+   ['14:05','<b class="flight">KE931 탑승</b><span class="note">14:05 → 19:35 · FCO T3</span>'],
+   ['21:00','레오나르도 익스프레스 탑승'],['22:00','퀴리날레 호텔 체크인 · 저녁 휴식']]},
+ {n:2,date:'1월 17일',dow:'일',city:'로마',r:'roma',pics:[['trevi','트레비 분수'],['pantheon','판테온'],['navona','나보나 광장'],['vaticano','성 베드로 대성당']],plan:[
+   ['09:00','트레비 분수 · 판테온 · 나보나 광장'],['12:00','점심식사'],
+   ['13:00','<b>바티칸 투어</b> 패스트트랙<span class="note">예약 필수</span>'],
+   ['18:00','저녁식사'],['19:00','성 베드로 대성당'],['20:00','광장 야경'],['21:00','호텔 휴식']]},
+ {n:3,date:'1월 18일',dow:'월',city:'남부 투어',r:'roma',pics:[['pompei','폼페이'],['positano','포지타노'],['amalfi','아말피 해안']],plan:[
+   ['08:00','<b>남부 투어</b> — 폼페이 · 포지타노 · 아말피'],['22:00','호텔 휴식']]},
+ {n:4,date:'1월 19일',dow:'화',city:'로마 → 피렌체',r:'firenze',pics:[['colosseo','콜로세움'],['foro','포로 로마노'],['duomo_fi','피렌체 두오모'],['pontevecchio','베키오 다리']],plan:[
+   ['07:00','조식 · 퀴리날레 호텔 체크아웃 후 짐보관'],
+   ['09:00','콜로세움 · 포로 로마노 · 팔라티노 언덕'],['12:00','고속열차 · 점심식사'],
+   ['14:00','그랜드 호텔 바글리오니 체크인'],['15:00','두오모 성당 · 베키오 다리 · 미켈란젤로'],
+   ['19:00','저녁식사<span class="note">티본스테이크</span>'],['20:00','미켈란젤로 광장 야경 · 호텔 휴식']]},
+ {n:5,date:'1월 20일',dow:'수',city:'토스카나',r:'firenze',pics:[['siena','시에나'],['sangimignano','산지미냐노']],plan:[
+   ['07:00','기상 및 준비'],['09:00','아침식사'],
+   ['10:00','<b>토스카나 투어</b> — 시에나 · 와이너리 · 산지미냐노'],['20:00','저녁식사'],['22:00','호텔 휴식']]},
+ {n:6,date:'1월 21일',dow:'목',city:'피렌체 → 베니스',r:'venezia',pics:[['canalgrande','대운하'],['rialto','리알토 다리']],plan:[
+   ['07:00','그랜드 호텔 바글리오니 체크아웃 · 짐보관'],['09:00','아카데미아 미술관'],
+   ['12:00','중앙시장 + 점심'],['13:00','고속열차'],
+   ['17:00','레오나르도 로얄 호텔 베니스 메스트레 체크인'],['18:00','저녁식사'],
+   ['19:00','리알토 다리 · 대운하 야경'],['22:00','호텔 휴식']]},
+ {n:7,date:'1월 22일',dow:'금',city:'베니스',r:'venezia',pics:[['sanmarco','산 마르코 광장'],['ducale','두칼레 궁전'],['murano','무라노'],['burano','부라노']],plan:[
+   ['07:00','기상 및 아침식사'],['09:00','산 마르코 광장 · 대성당 · 두칼레 궁전'],
+   ['12:00','점심식사'],['13:00','무라노 · 부라노 섬'],['19:00','저녁식사'],
+   ['20:00','곤돌라 야경'],['22:00','호텔 휴식']]},
+ {n:8,date:'1월 23일',dow:'토',city:'베니스 → 밀라노',r:'milano',pics:[['duomo_mi','밀라노 두오모'],['galleria','갤러리아'],['sforzesco','스포르체스코 성']],plan:[
+   ['07:00','기상 및 아침식사'],['09:00','레오나르도 로얄 호텔 체크아웃'],['10:00','고속열차'],
+   ['13:00','NYX 호텔 밀란 체크인 · 짐보관'],['13:30','점심식사'],
+   ['14:30','<b>최후의 만찬</b><span class="note">예약 필수 · 30분 전 도착</span>'],
+   ['15:30','밀라노 <b>두오모 + 옥상</b><span class="note">시간대 예약</span>'],
+   ['17:00','갤러리아 쇼핑'],['19:00','스포르체스코 성'],['21:00','저녁식사'],['22:00','호텔 휴식']]},
+ {n:9,date:'1월 24일',dow:'일',city:'밀라노 → 귀국',r:'milano',pics:[],plan:[
+   ['07:00','기상 및 아침식사'],['09:00','NYX 호텔 밀란 체크아웃'],['10:00','밀라노 시내'],
+   ['15:00','공항 이동 및 체크인'],
+   ['20:05','<b class="flight">KE928 탑승</b><span class="note">20:05 → 15:35 (+1) · MXP T1</span>']]},
+ {n:10,date:'1월 25일',dow:'월',city:'인천 도착',r:'milano',pics:[],plan:[
+   ['15:35','인천공항 도착'],['16:00','집으로 귀가'],['18:00','휴식']]},
+];
 
-  /* ---------- build city sections ---------- */
-  const box=document.getElementById('cities');
-  const regionOf=n=> n<=3?'roma': n<=5?'firenze': n<=7?'venezia':'milano';
-  chapters.forEach(ch=>{
-    const cdays=days.filter(d=>regionOf(d.n)===ch.r);
-    const tl=cdays.map(d=>{
-      const rows=d.plan.map(p=>`<div class="t" style="color:${HEX[ch.r]}">${p[0]}</div><div class="a">${p[1]}</div>`).join('');
-      return `<div class="tl-day reveal">
-        <span class="tl-dot"></span>
-        <div class="tl-label"><span class="tl-n" style="color:${HEX[ch.r]}">Day ${d.n}</span><span class="tl-date">${d.date}</span><span class="tl-tag" style="color:${HEX[ch.r]}"><span>${d.city}</span></span></div>
-        <div class="tl-plan">${rows}</div></div>`;
-    }).join('');
-    const sec=document.createElement('section');
-    sec.className='city';sec.id='sec-'+ch.r;sec.dataset.city=ch.r;
-    sec.style.color=HEX[ch.r];
-    sec.innerHTML=`
-      <div class="city-bg" data-par="0.15"><svg viewBox="0 0 420 300" preserveAspectRatio="xMinYMax meet"><g fill="${HEX[ch.r]}">${MOTIF[ch.r]}</g></svg></div>
-      <div class="city-num" style="color:${HEX[ch.r]}">${ch.idx}</div>
-      <div class="wrap city-inner">
-        <div class="city-head reveal">
-          <div class="city-idx" style="color:${HEX[ch.r]}">${ch.idx}</div>
-          <div class="city-name" style="color:${HEX[ch.r]}">${ch.lat}</div>
-          <div class="city-ko">${ch.ko}</div>
-          <div class="city-meta">
-            <span class="pill" style="background:${HEX[ch.r]}">${ch.nights}</span>
-            <span><b>${ch.dates}</b></span>
-            <span>🏨 ${ch.hotel}</span>
-          </div>
-        </div>
-        <div class="tl" style="color:${HEX[ch.r]}">${tl}</div>
-      </div>`;
-    box.appendChild(sec);
-  });
+const cities=[
+ {r:'roma',i:1,lat:'Roma',ko:'로마',nights:'3박',dates:'1.16 – 1.19',hotel:'퀴리날레 호텔',
+  cover:'colosseo',tags:['콜로세움','바티칸','트레비 분수','남부 투어'],ll:[41.9028,12.4964]},
+ {r:'firenze',i:2,lat:'Firenze',ko:'피렌체',nights:'2박',dates:'1.19 – 1.21',hotel:'그랜드 호텔 바글리오니',
+  cover:'duomo_fi',tags:['두오모 돔','베키오 다리','아카데미아','토스카나'],ll:[43.7696,11.2558]},
+ {r:'venezia',i:3,lat:'Venezia',ko:'베니스',nights:'2박',dates:'1.21 – 1.23',hotel:'레오나르도 로얄 (메스트레)',
+  cover:'canalgrande',tags:['산 마르코','두칼레 궁전','부라노','곤돌라'],ll:[45.4408,12.3155]},
+ {r:'milano',i:4,lat:'Milano',ko:'밀라노',nights:'1박',dates:'1.23 – 1.25',hotel:'NYX 호텔 밀란',
+  cover:'duomo_mi',tags:['최후의 만찬','두오모 옥상','갤러리아','스포르체스코'],ll:[45.4642,9.1900]},
+];
 
-  /* ---------- reserve ---------- */
-  const req=[
-    ['⛪','바티칸 박물관 투어','Day 2 · 1/17','패스트트랙으로 사전 예약'],
-    ['🏟️','콜로세움 · 포로 로마노','Day 4 · 1/19','30일 전 오픈되자마자 예약 (실명·시간 지정, 겨울 15:30 마지막 입장)'],
-    ['🔴','피렌체 두오모 돔 등반','Day 4 · 1/19','성당 내부는 무료, 돔은 브루넬레스키 패스로 시간 예약 (2~3주 전 매진)'],
-    ['🗿','아카데미아 미술관 (다비드상)','Day 6 · 1/21','시간 지정 예약, 최소 1~2주 전 (공식 b-ticket)'],
-    ['🦁','두칼레 궁전 · 산 마르코 대성당','Day 7 · 1/22','둘 다 스킵더라인 예약 추천 (대성당 줄이 특히 길어요)'],
-    ['🎨','최후의 만찬 (다빈치)','Day 8 · 1/23 (토) · 최우선','2026년 9월 중순 오픈 → 한국시간 저녁 7시(이탈리아 정오)에 lastsupper.shop에서 즉시 예약. 여권 영문 이름 입력, 이름 변경 불가. 실패 시 → GetYourGuide·Tiqets 가이드 투어에 별도 물량'],
-    ['🕍','밀라노 두오모 + 옥상','Day 8 · 1/23 (토)','주말은 예약제만 입장 → 방문 1~2개월 전(11~12월) 시간대 지정 예약. 실패 시 → 계단(엘리베이터 대신) 티켓은 여유 있음 / 성당 내부만이라도 관람'],
-  ];
-  const opt=[
-    ['🚄','고속열차 (Frecciarossa / Italo)','4개 도시 이동','미리 예약하면 요금이 훨씬 저렴하고 좌석도 확보돼요'],
-    ['🔔','최후의 만찬 오픈일 알림','2026년 9월 초부터','cenacolovinciano.org 공지를 매일 확인. 오픈 날짜 뜨면 알람 맞추기 (2027년 1월분 정확한 오픈일은 아직 미발표)'],
-  ];
-  const mk=(a,soft)=>a.map(x=>`<div class="res-card${soft?' soft':''}"><span class="b">${x[0]}</span><span><span class="k">${x[1]}</span><span class="dd">${x[2]}</span><span class="s">${x[3]}</span></span></div>`).join('');
-  document.getElementById('resReq').innerHTML=mk(req,false);
-  document.getElementById('resOpt').innerHTML=mk(opt,true);
+/* ================= CITY RAIL ================= */
+document.getElementById('cityRail').innerHTML=cities.map(c=>`
+  <article class="citycard">
+    <div class="ph">
+      <img src="${IMG[c.cover]}" alt="${c.ko}" loading="lazy" decoding="async">
+      <span class="num" style="background:${HEX[c.r]}">${c.i}</span>
+      <span class="nights">${c.nights}</span>
+      <div class="cap"><div class="lat">${c.lat}</div><div class="ko">${c.ko}</div></div>
+    </div>
+    <div class="info">
+      <div class="dt">${c.dates}</div>
+      <div class="ht"><span>🏨</span><span>${c.hotel}</span></div>
+      <div class="tags">${c.tags.map(t=>`<span style="background:${WEAK[c.r]};color:${HEX[c.r]}">${t}</span>`).join('')}</div>
+    </div>
+  </article>`).join('');
 
-  /* ---------- budget ---------- */
-  const budget=[
-    ['퀴리날레 호텔','로마 3박 (1/16–19) · 조식 포함',562342,false],
-    ['그랜드 호텔 바글리오니','피렌체 2박 (1/19–21) · 조식 미포함',485107,false],
-    ['레오나르도 로얄 호텔 베니스 메스트레','베니스 2박 (1/21–23) · 조식 미포함',288374,false],
-    ['NYX 호텔 밀란 바이 레오나르도','밀라노 1박 (1/23–24) · 조식 미포함',180716,false],
-    ['대한항공 항공권','KE931 로마 IN / KE928 밀라노 OUT',2657000,true],
-  ];
-  const total=budget.reduce((s,b)=>s+b[2],0);
-  const bt=document.getElementById('btable');
-  budget.forEach((b,i)=>{const r=document.createElement('div');r.className='brow brow-anim'+(b[3]?' flight':'');
-    r.style.transitionDelay=(0.09*i)+'s';
-    r.innerHTML=`<div class="name">${b[0]}<span class="desc">${b[1]}</span></div><div class="amt">${b[2].toLocaleString('ko-KR')}</div>`;bt.appendChild(r);});
-  const tot=document.createElement('div');tot.className='btotal brow-anim';
-  tot.style.transitionDelay=(0.09*budget.length)+'s';
-  tot.innerHTML=`<div class="name">Totale</div><div class="amt">${total.toLocaleString('ko-KR')}</div>`;bt.appendChild(tot);
-  const bnote=document.createElement('div');bnote.className='bnote reveal';
-  bnote.innerHTML=`<span class="bi">💶</span><span><span class="bt-k">현지 경비 · 환전 완료</span><span class="bt-s">식사 · 입장권 · 쇼핑 · 투어 등 현지 지출용 (≈ €2,650)</span></span><span class="bt-amt">4,000,000</span>`;
-  bt.parentElement.appendChild(bnote);
+/* ================= DAYS ================= */
+const dayList=document.getElementById('dayList');
+dayList.innerHTML=days.map(d=>{
+  const col=HEX[d.r];
+  const pics=d.pics.length?`<div class="dphotos">${d.pics.map(p=>
+    `<figure><img src="${IMG[p[0]]}" alt="${p[1]}" loading="lazy" decoding="async"><figcaption>${p[1]}</figcaption></figure>`).join('')}</div>`:'';
+  const rows=d.plan.map(p=>{
+    const key=/<b/.test(p[1]);
+    return `<div class="tl-row${key?' key':''}"><span class="tm">${p[0]}</span><span class="ac">${p[1]}</span></div>`;
+  }).join('');
+  return `<article class="day" id="day-${d.n}" data-day="${d.n}">
+    <button class="day-hd" aria-expanded="false" aria-controls="daybody-${d.n}">
+      <span class="day-badge" style="background:${col}"><small>DAY</small>${d.n}</span>
+      <span class="meta">
+        <span class="dt">${d.date} <span style="color:var(--t3);font-weight:600">(${d.dow})</span></span>
+        <span class="ci"><em style="background:${WEAK[d.r]};color:${col}">${d.city}</em><span>${d.plan.length}개 일정</span></span>
+      </span>
+      <span class="chev"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+    </button>
+    <div class="day-body" id="daybody-${d.n}"><div><div class="day-inner">
+      ${pics}
+      <div class="tl" style="color:${col}">${rows}</div>
+    </div></div></div>
+  </article>`;
+}).join('');
 
-  /* ---------- transit (trains + flights) ---------- */
-  const F='<span class="fill">____</span>';
-  const legs=[
-    ['air','✈','인천 <span class="arr">→</span> 로마 (FCO)','1/16 (토) · KE931 · A350-900 · 직항','ICN T2 14:05 → FCO T3 19:35','13시간 30분 · 39H / '+F],
-    ['train','🚄','로마 Termini <span class="arr">→</span> 피렌체 S.M.N.','1/19 (화) · 프레차로사 약 1시간 30분','미예약','10월 초 구매 권장'],
-    ['train','🚄','피렌체 S.M.N. <span class="arr">→</span> 베니스 Mestre','1/21 (목) · 프레차로사 약 2시간','미예약','10월 초 구매 권장'],
-    ['train','🚄','베니스 Mestre <span class="arr">→</span> 밀라노 Centrale','1/23 (토) · 프레차로사 약 2시간 30분','미예약','10월 초 구매 권장'],
-    ['transfer','🚇','밀라노 Centrale <span class="arr">→</span> 말펜사 T1','1/24 (일) · 말펜사 익스프레스 약 51분 · €13','15~30분 간격','플랫폼 3'],
-    ['air','✈','밀라노 (MXP) <span class="arr">→</span> 인천','1/24 (일) · KE928 · B787-9 · 직항','MXP T1 20:05 → ICN T2 15:35 (+1)','11시간 30분 · 35B / '+F],
-  ];
-  document.getElementById('legGrid').innerHTML=legs.map(l=>
-    `<div class="leg reveal${l[0]==='air'?' air':''}"><span class="ico">${l[1]}</span><span class="route">${l[2]}</span><span class="sub">${l[3]}</span><span class="meta"><b>${l[4]}</b>${l[5]}</span></div>`).join('');
+/* day picker */
+const dayPick=document.getElementById('dayPick');
+dayPick.innerHTML=days.map(d=>
+  `<button data-goto="${d.n}"><b>Day ${d.n}</b><span>${d.date.replace('월 ','.').replace('일','')}</span></button>`).join('');
 
-  /* ---------- logistics (hotels + practical) ---------- */
-  const logi=[
-    ['🏨','퀴리날레 호텔','로마 · 1/16–19 · 562,342원',[['체크인','15:00'],['체크아웃','12:00 · 짐보관 가능'],['주소','Via Nazionale 7, 00184 Roma'],['위치','레푸블리카역 150m · 조식 포함'],['예약','아고다(Agoda) 예약']]],
-    ['🏨','그랜드 호텔 바글리오니','피렌체 · 1/19–21 · 485,107원',[['체크인','15:00'],['체크아웃','12:00'],['주소','Piazza dell\'Unità Italiana 6, 50123 Firenze'],['위치','S.M.N.역 200m (지하통로 연결)'],['예약','아고다(Agoda) 예약']]],
-    ['🏨','레오나르도 로얄 (메스트레)','베니스 · 1/21–23 · 288,374원',[['체크인','14:00'],['체크아웃','12:00'],['주소','Via Ca\' Marcello 6, 30172 Mestre-Venezia'],['위치','베니스 Mestre역 바로 옆'],['예약','아고다(Agoda) 예약']]],
-    ['🏨','NYX 호텔 밀란','밀라노 · 1/23–24 · 180,716원',[['체크인','15:00'],['체크아웃','11:00 · 짐보관 가능'],['주소','Piazza IV Novembre 3, 20124 Milano'],['위치','밀라노 Centrale역 앞 450m'],['예약','아고다(Agoda) 예약']]],
-  ];
-  document.getElementById('logiGrid').innerHTML=logi.map(c=>
-    `<div class="logi-card reveal"><div class="ct">${c[0]} ${c[1]}</div><div class="cc">${c[2]}</div>${c[3].map(r=>`<div class="row"><span class="rk">${r[0]}</span><span>${r[1]}</span></div>`).join('')}</div>`).join('');
+function openDay(n,scroll){
+  const el=document.getElementById('day-'+n);
+  if(!el)return;
+  el.classList.add('open');
+  el.querySelector('.day-hd').setAttribute('aria-expanded','true');
+  if(scroll){
+    const y=el.getBoundingClientRect().top+scrollY-(56+50+10);
+    scrollTo({top:y,behavior:'smooth'});
+  }
+  dayPick.querySelectorAll('button').forEach(b=>b.classList.toggle('on',+b.dataset.goto===n));
+}
+dayList.addEventListener('click',e=>{
+  const hd=e.target.closest('.day-hd'); if(!hd)return;
+  const d=hd.closest('.day'); const now=d.classList.toggle('open');
+  hd.setAttribute('aria-expanded',String(now));
+  if(now)dayPick.querySelectorAll('button').forEach(b=>b.classList.toggle('on',+b.dataset.goto===+d.dataset.day));
+});
+dayPick.addEventListener('click',e=>{
+  const b=e.target.closest('button[data-goto]'); if(!b)return;
+  openDay(+b.dataset.goto,true);
+});
+openDay(1,false);
 
-  /* ---------- packing ---------- */
-  const pack=[
-    ['🧳','필수 · 서류',['<b>여권</b> + 사본/사진<span class="hint">분실 대비 별도 보관</span>','항공권 · e티켓','<b>모든 예약 바코드/QR</b><span class="hint">최후의 만찬·두오모·바티칸·콜로세움·기차</span>','해외 결제 카드 2장 이상','여행자 보험 증서']],
-    ['🧥','겨울 옷 (1월)',['두꺼운 패딩/코트<span class="hint">밀라노·베니스 영하 가능</span>','히트텍 등 내복','목도리 · 장갑 · 비니','편한 방수 신발<span class="hint">돌길 많음</span>','우산 (겨울비 대비)']],
-    ['🔌','전자 · 소품',['<b>C/F형 멀티어댑터</b><span class="hint">220V</span>','보조배터리','유심/이심 또는 로밍','카메라 · 충전기','목베개 (장거리 비행)']],
-    ['💊','상비약 · 기타',['소화제 · 지사제 · 진통제','밴드 · 개인약','립밤 · 핸드크림<span class="hint">겨울 건조</span>','물티슈 · 휴지','에코백 (마트·기념품)']],
-  ];
-  document.getElementById('packGrid').innerHTML=pack.map((c,ci)=>
-    `<div class="pack-col reveal"><h4>${c[0]} ${c[1]}</h4><ul>${c[2].map((i,ii)=>`<li data-pk="p${ci}_${ii}">${i}</li>`).join('')}</ul></div>`).join('');
+/* ================= RESERVE ================= */
+const req=[
+ ['⛪','바티칸 박물관 투어','Day 2 · 1/17','패스트트랙으로 사전 예약',''],
+ ['🏟️','콜로세움 · 포로 로마노','Day 4 · 1/19','30일 전 오픈되자마자 예약 (실명·시간 지정, 겨울 15:30 마지막 입장)',''],
+ ['🔴','피렌체 두오모 돔 등반','Day 4 · 1/19','성당 내부는 무료, 돔은 브루넬레스키 패스로 시간 예약 (2~3주 전 매진)',''],
+ ['🗿','아카데미아 미술관 (다비드상)','Day 6 · 1/21','시간 지정 예약, 최소 1~2주 전 (공식 b-ticket)',''],
+ ['🦁','두칼레 궁전 · 산 마르코 대성당','Day 7 · 1/22','둘 다 스킵더라인 예약 추천 (대성당 줄이 특히 길어요)',''],
+ ['🎨','최후의 만찬 (다빈치)','Day 8 · 1/23 (토)','2026년 9월 중순 오픈 → 한국시간 저녁 7시(이탈리아 정오)에 lastsupper.shop에서 즉시 예약. 여권 영문 이름 입력, 이름 변경 불가. 실패 시 → GetYourGuide·Tiqets 가이드 투어에 별도 물량','최우선'],
+ ['🕍','밀라노 두오모 + 옥상','Day 8 · 1/23 (토)','주말은 예약제만 입장 → 방문 1~2개월 전(11~12월) 시간대 지정 예약. 실패 시 → 계단(엘리베이터 대신) 티켓은 여유 있음 / 성당 내부만이라도 관람','주말'],
+];
+const opt=[
+ ['🚄','고속열차 (Frecciarossa / Italo)','4개 도시 이동','미리 예약하면 요금이 훨씬 저렴하고 좌석도 확보돼요',''],
+ ['🔔','최후의 만찬 오픈일 알림','2026년 9월 초부터','cenacolovinciano.org 공지를 매일 확인. 오픈 날짜 뜨면 알람 맞추기 (2027년 1월분 정확한 오픈일은 아직 미발표)',''],
+];
+const resHTML=(a,must)=>a.map(x=>`
+  <div class="res${must?' must':''}">
+    <span class="emo">${x[0]}</span>
+    <span class="bd">
+      <span class="tt">${x[1]}${x[4]?`<span class="pri">${x[4]}</span>`:''}</span>
+      <span class="wh">${x[2]}</span>
+      <span class="ds">${x[3]}</span>
+    </span>
+  </div>`).join('');
+document.getElementById('resReq').innerHTML=resHTML(req,true);
+document.getElementById('resOpt').innerHTML=resHTML(opt,false);
 
-  /* packing check state (persists via localStorage) */
-  (function(){
-    const KEY='italy_pack_v1';
-    let saved={};
-    try{saved=JSON.parse(localStorage.getItem(KEY)||'{}');}catch(e){saved={};}
-    const items=document.querySelectorAll('.pack-col li[data-pk]');
-    items.forEach(li=>{
-      const id=li.dataset.pk;
-      if(saved[id])li.classList.add('done');
-      li.addEventListener('click',()=>{
-        li.classList.toggle('done');
-        saved[id]=li.classList.contains('done');
-        try{localStorage.setItem(KEY,JSON.stringify(saved));}catch(e){}
-      });
+/* ================= BUDGET ================= */
+const budget=[
+ ['퀴리날레 호텔','로마 3박 (1/16–19) · 조식 포함',562342,'roma'],
+ ['그랜드 호텔 바글리오니','피렌체 2박 (1/19–21) · 조식 미포함',485107,'firenze'],
+ ['레오나르도 로얄 호텔 베니스 메스트레','베니스 2박 (1/21–23) · 조식 미포함',288374,'venezia'],
+ ['NYX 호텔 밀란 바이 레오나르도','밀라노 1박 (1/23–24) · 조식 미포함',180716,'milano'],
+ ['대한항공 항공권','KE931 로마 IN / KE928 밀라노 OUT',2657000,'air'],
+];
+const total=budget.reduce((s,b)=>s+b[2],0);
+const maxAmt=Math.max(...budget.map(b=>b[2]));
+document.getElementById('bcard').innerHTML=budget.map(b=>{
+  const col=b[3]==='air'?'var(--brand)':HEX[b[3]];
+  return `<div class="brow">
+    <span class="nm">${b[0]}<span class="ds">${b[1]}</span></span>
+    <span class="am">${b[2].toLocaleString('ko-KR')}</span>
+    <span class="bbar"><i data-w="${(b[2]/maxAmt*100).toFixed(1)}" style="background:${col}"></i></span>
+  </div>`;
+}).join('')+`<div class="btotal"><span class="nm">Totale · 사전 결제 합계</span><span class="am">${total.toLocaleString('ko-KR')}</span></div>`;
+
+/* ================= TRANSIT ================= */
+const F='<span class="fill">____</span>';
+const legs=[
+ ['air','✈️','AIR','인천 <span class="arr">→</span> 로마 (FCO)','1/16 (토) · KE931 · A350-900 · 직항','ICN T2 14:05 → FCO T3 19:35','13시간 30분 · 39H / '+F],
+ ['train','🚄','TRENO','로마 Termini <span class="arr">→</span> 피렌체 S.M.N.','1/19 (화) · 프레차로사 약 1시간 30분','미예약','10월 초 구매 권장'],
+ ['train','🚄','TRENO','피렌체 S.M.N. <span class="arr">→</span> 베니스 Mestre','1/21 (목) · 프레차로사 약 2시간','미예약','10월 초 구매 권장'],
+ ['train','🚄','TRENO','베니스 Mestre <span class="arr">→</span> 밀라노 Centrale','1/23 (토) · 프레차로사 약 2시간 30분','미예약','10월 초 구매 권장'],
+ ['transfer','🚇','METRO','밀라노 Centrale <span class="arr">→</span> 말펜사 T1','1/24 (일) · 말펜사 익스프레스 약 51분 · €13','15~30분 간격','플랫폼 3'],
+ ['air','✈️','AIR','밀라노 (MXP) <span class="arr">→</span> 인천','1/24 (일) · KE928 · B787-9 · 직항','MXP T1 20:05 → ICN T2 15:35 (+1)','11시간 30분 · 35B / '+F],
+];
+document.getElementById('legs').innerHTML=legs.map(l=>`
+  <div class="leg ${l[0]==='air'?'air':''}">
+    <div class="leg-top"><span class="emo">${l[1]}</span><span class="rt">${l[3]}</span><span class="kind">${l[2]}</span></div>
+    <div class="sub">${l[4]}</div>
+    <div class="grid"><span class="k">${l[5]}</span><span class="v">${l[6]}</span></div>
+  </div>`).join('');
+
+/* ================= HOTELS ================= */
+const hotels=[
+ ['roma','navona','퀴리날레 호텔','로마','1/16 – 1/19 · 3박',562342,[['체크인','15:00'],['체크아웃','12:00 · 짐보관 가능'],['주소','Via Nazionale 7, 00184 Roma'],['위치','레푸블리카역 150m · 조식 포함'],['예약','아고다(Agoda) 예약']]],
+ ['firenze','pontevecchio','그랜드 호텔 바글리오니','피렌체','1/19 – 1/21 · 2박',485107,[['체크인','15:00'],['체크아웃','12:00'],['주소',"Piazza dell'Unità Italiana 6, 50123 Firenze"],['위치','S.M.N.역 200m (지하통로 연결)'],['예약','아고다(Agoda) 예약']]],
+ ['venezia','burano','레오나르도 로얄 (메스트레)','베니스','1/21 – 1/23 · 2박',288374,[['체크인','14:00'],['체크아웃','12:00'],['주소',"Via Ca' Marcello 6, 30172 Mestre-Venezia"],['위치','베니스 Mestre역 바로 옆'],['예약','아고다(Agoda) 예약']]],
+ ['milano','galleria','NYX 호텔 밀란','밀라노','1/23 – 1/24 · 1박',180716,[['체크인','15:00'],['체크아웃','11:00 · 짐보관 가능'],['주소','Piazza IV Novembre 3, 20124 Milano'],['위치','밀라노 Centrale역 앞 450m'],['예약','아고다(Agoda) 예약']]],
+];
+document.getElementById('hotels').innerHTML=hotels.map(h=>`
+  <article class="hotel">
+    <div class="hotel-hd">
+      <span class="th"><img src="${IMG[h[1]]}" alt="${h[3]}" loading="lazy" decoding="async"></span>
+      <span class="bd">
+        <span class="cy" style="color:${HEX[h[0]]}">${h[3]}</span>
+        <span class="nm">${h[2]}</span>
+        <span class="dt">${h[4]}</span>
+        <span class="pr">${h[5].toLocaleString('ko-KR')}</span>
+      </span>
+    </div>
+    <div class="hotel-rows">${h[6].map(r=>`<div class="hrow"><span class="k">${r[0]}</span><span class="v">${r[1]}</span></div>`).join('')}</div>
+  </article>`).join('');
+
+/* ================= PACKING ================= */
+const packData=[
+ ['🧳','필수 · 서류',[['<b>여권</b> + 사본/사진','분실 대비 별도 보관'],['항공권 · e티켓',''],['<b>모든 예약 바코드/QR</b>','최후의 만찬·두오모·바티칸·콜로세움·기차'],['해외 결제 카드 2장 이상',''],['여행자 보험 증서','']]],
+ ['🧥','겨울 옷 (1월)',[['두꺼운 패딩/코트','밀라노·베니스 영하 가능'],['히트텍 등 내복',''],['목도리 · 장갑 · 비니',''],['편한 방수 신발','돌길 많음'],['우산','겨울비 대비']]],
+ ['🔌','전자 · 소품',[['<b>C/F형 멀티어댑터</b>','220V'],['보조배터리',''],['유심/이심 또는 로밍',''],['카메라 · 충전기',''],['목베개','장거리 비행']]],
+ ['💊','상비약 · 기타',[['소화제 · 지사제 · 진통제',''],['밴드 · 개인약',''],['립밤 · 핸드크림','겨울 건조'],['물티슈 · 휴지',''],['에코백','마트·기념품']]],
+];
+const CHK='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5.5 5.5L20 6.5"/></svg>';
+document.getElementById('packs').innerHTML=packData.map((c,ci)=>`
+  <section class="pack" data-col="${ci}">
+    <h4>${c[0]} ${c[1]}<span class="cnt"><b class="cd">0</b>/${c[2].length}</span></h4>
+    <ul>${c[2].map((it,ii)=>`
+      <li data-pk="p${ci}_${ii}"><span class="box">${CHK}</span><span class="lb">${it[0]}${it[1]?`<span class="hint">${it[1]}</span>`:''}</span></li>`).join('')}
+    </ul>
+  </section>`).join('');
+
+(function(){
+  const KEY='italy_pack_v2';
+  let saved={};
+  try{saved=JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){saved={}}
+  const items=[...document.querySelectorAll('.pack li[data-pk]')];
+  const trk=document.getElementById('packTrack'), pct=document.getElementById('packPct'),
+        lbl=document.getElementById('packLabel');
+  function sync(){
+    const done=items.filter(li=>li.classList.contains('done')).length;
+    const p=Math.round(done/items.length*100);
+    trk.style.width=p+'%'; pct.textContent=p+'%';
+    lbl.textContent=p===100?'준비 완료! 🎉':`준비 완료 ${done} / ${items.length}`;
+    document.querySelectorAll('.pack').forEach(sec=>{
+      const d=sec.querySelectorAll('li.done').length;
+      sec.querySelector('.cd').textContent=d;
     });
-  })();
-
-  /* ---------- nav dots ---------- */
-  const secs=[['top','시작','#20303a'],['sec-roma','로마',HEX.roma],['sec-firenze','피렌체',HEX.firenze],['sec-venezia','베니스',HEX.venezia],['sec-milano','밀라노',HEX.milano],['sec-reserve','예약',HEX.venezia],['sec-budget','예산',HEX.firenze],['sec-transit','이동',HEX.venezia],['sec-logi','숙소',HEX.milano],['sec-pack','준비물',HEX.firenze]];
-  const nav=document.getElementById('navdots');
-  secs.forEach(s=>{const a=document.createElement('a');a.href='#'+s[0];a.dataset.l=s[1];a.style.setProperty('--c',s[2]);a.dataset.t=s[0];nav.appendChild(a);});
-  const navA=[...nav.children];
-
-  /* ---------- helpers ---------- */
-
-  /* ---------- reveal / triggers ---------- */
-  const io=new IntersectionObserver(es=>{es.forEach(e=>{if(!e.isIntersecting)return;const t=e.target;t.classList.add('in');
-    if(t.id==='btable'){t.querySelectorAll('.brow-anim').forEach(r=>r.classList.add('in'));}
-    if(t.classList.contains('tl-day')){t.querySelectorAll('.a').forEach((a,i)=>a.style.transitionDelay=(0.05*i)+'s');}
-    io.unobserve(t);});},{threshold:.18});
-  const obsAll=()=>document.querySelectorAll('.reveal:not(.in), .res-card:not(.in), .tl-day:not(.in), .ov:not(.in)').forEach(el=>io.observe(el));
-  obsAll();
-
-  /* reserve cards stagger */
-  const po=new IntersectionObserver(es=>{es.forEach(e=>{if(!e.isIntersecting)return;
-    [...e.target.querySelectorAll('.res-card')].forEach((c,i)=>setTimeout(()=>c.classList.add('in'),i*100));po.unobserve(e.target);});},{threshold:.15});
-  document.querySelectorAll('.res-grid').forEach(g=>po.observe(g));
-
-  /* ---------- route draw ---------- */
-  const path=document.getElementById('routePath'),map=document.getElementById('map');
-  const movePlane=document.getElementById('movePlane');
-  const len=path.getTotalLength();path.style.strokeDasharray=len;path.style.strokeDashoffset=len;
-  function flyPlane(dur,loop){
-    if(!movePlane)return;
-    movePlane.style.opacity='1';
-    const start=performance.now();
-    function step(now){
-      let p=(now-start)/dur; 
-      if(p>=1)p=1;
-      const pt=path.getPointAtLength(p*len);
-      const ahead=path.getPointAtLength(Math.min(p*len+1,len));
-      const ang=Math.atan2(ahead.y-pt.y,ahead.x-pt.x)*180/Math.PI;
-      movePlane.setAttribute('transform',`translate(${pt.x},${pt.y}) rotate(${ang})`);
-      if(p<1){requestAnimationFrame(step);} 
-      else if(loop){
-        // brief pause then fly again
-        movePlane.style.transition='opacity .5s';movePlane.style.opacity='0';
-        setTimeout(()=>{movePlane.style.transition='';flyPlane(dur,true);},1000);
-      }
-    }
-    requestAnimationFrame(step);
+    try{localStorage.setItem(KEY,JSON.stringify(saved))}catch(e){}
   }
-  new IntersectionObserver((es,o)=>{es.forEach(e=>{if(!e.isIntersecting)return;map.classList.add('in');
-    path.style.transition='stroke-dashoffset 2.6s cubic-bezier(.4,0,.2,1)';requestAnimationFrame(()=>path.style.strokeDashoffset=0);
-    map.querySelectorAll('.dot').forEach(d=>d.style.transform='scale(1)');
-    setTimeout(()=>flyPlane(2600,true),400);
-    o.unobserve(e.target);});},{threshold:.3}).observe(map);
+  items.forEach(li=>{ if(saved[li.dataset.pk])li.classList.add('done'); });
+  document.getElementById('packs').addEventListener('click',e=>{
+    const li=e.target.closest('li[data-pk]'); if(!li)return;
+    li.classList.toggle('done');
+    saved[li.dataset.pk]=li.classList.contains('done');
+    sync();
+  });
+  document.getElementById('packReset').addEventListener('click',()=>{
+    items.forEach(li=>li.classList.remove('done')); saved={}; sync();
+  });
+  sync();
+})();
 
-  /* ---------- scroll: progress, parallax, nav, totop ---------- */
-  const bar=document.getElementById('progress'),totop=document.getElementById('totop');
-  const heroInner=document.getElementById('heroInner'),heroScene=document.getElementById('heroScene');
-  const cityBgs=[...document.querySelectorAll('.city-bg')];
-  const cityTint=document.getElementById('cityTint');
-  const navTargets=secs.map(s=>document.getElementById(s[0]));
-  let ticking=false;
-  function onScroll(){
-    const h=document.documentElement,st=h.scrollTop,max=h.scrollHeight-h.clientHeight;
-    bar.style.width=(max>0?st/max*100:0)+'%';
-    totop.classList.toggle('show',st>700);
-    // hero parallax + fade
-    const vh=h.clientHeight;
-    if(st<vh){heroInner.style.transform=`translateY(${st*0.35}px)`;heroInner.style.opacity=String(Math.max(0,1-st/(vh*0.7)));
-      heroScene.style.transform=`translateY(${st*-0.12}px)`;}
-    // city bg parallax
-    cityBgs.forEach(bg=>{const rect=bg.parentElement.getBoundingClientRect();const off=(rect.top-vh/2)*-0.08;bg.style.transform=`translateY(${off}px)`;});
-    // active nav dot
-    let active=0;navTargets.forEach((el,i)=>{if(el){const r=el.getBoundingClientRect();if(r.top<=vh*0.5)active=i;}});
-    navA.forEach((a,i)=>a.classList.toggle('on',i===active));
-    // city color tint (only for city sections; subtle)
-    if(cityTint){
-      const col=secs[active] && secs[active][2];
-      if(active>0 && col && col!=='#20303a'){cityTint.style.setProperty('--tint',col);cityTint.classList.add('show');}
-      else{cityTint.classList.remove('show');}
-    }
-    ticking=false;
+/* ================= D-DAY ================= */
+(function(){
+  const dep=new Date(2027,0,16), ret=new Date(2027,0,25);
+  const today=new Date(); today.setHours(0,0,0,0);
+  const day=864e5;
+  const num=document.getElementById('ddayNum'), t=document.getElementById('ddayTitle'),
+        s=document.getElementById('ddaySub');
+  const left=Math.round((dep-today)/day);
+  if(left>0){
+    num.innerHTML='D-'+left;
+    t.textContent='출발까지';
+    s.textContent='2027년 1월 16일 (토) · KE931 14:05';
+  }else if(today<=ret){
+    const d=Math.round((today-dep)/day)+1;
+    num.innerHTML='DAY <small>'+d+'</small>';
+    t.textContent='지금 이탈리아 ✈️';
+    s.textContent='여행 '+d+'일차 진행 중';
+  }else{
+    num.innerHTML='FIN';
+    t.textContent='다녀왔어요';
+    s.textContent='2027.1.16 – 1.25 · 이탈리아 신혼여행';
   }
-  addEventListener('scroll',()=>{if(!ticking){requestAnimationFrame(onScroll);ticking=true;}},{passive:true});
-  onScroll();
-  totop.addEventListener('click',()=>scrollTo({top:0,behavior:'smooth'}));
+})();
 
-  /* ---------- stars ---------- */
-  const sc=document.getElementById('stars');for(let i=0;i<28;i++){const s=document.createElement('span');s.className='star';
-    const z=1+Math.random()*3;s.style.width=z+'px';s.style.height=z+'px';s.style.left=Math.random()*100+'%';s.style.top=Math.random()*70+'%';
-    s.style.animationDuration=(2.5+Math.random()*3)+'s';s.style.animationDelay=(Math.random()*4)+'s';sc.appendChild(s);}
+/* 도시별 숙박 비율 바 */
+(function(){
+  const nights={roma:3,firenze:2,venezia:2,milano:1};
+  const sum=Object.values(nights).reduce((a,b)=>a+b,0);
+  const tr=document.getElementById('nightTrack'), lg=document.getElementById('nightLegend');
+  tr.innerHTML=cities.map(c=>`<i data-w="${nights[c.r]/sum*100}" style="background:${HEX[c.r]}"></i>`).join('');
+  lg.innerHTML=cities.map(c=>
+    `<span><em style="background:${HEX[c.r]}"></em>${c.ko} ${nights[c.r]}박</span>`).join('');
+  requestAnimationFrame(()=>{
+    tr.querySelectorAll('i').forEach(i=>i.style.width=i.dataset.w+'%');
+  });
+})();
 
-  /* ---------- shooting stars ---------- */
-  function shootStar(){
-    if(document.hidden)return schedule();
-    const st=document.createElement('div');st.className='shooting';
-    st.style.left=(Math.random()*45)+'%';st.style.top=(Math.random()*30)+'%';
-    const dur=1.1+Math.random()*0.7;
-    st.style.animation=`shoot ${dur}s ease-out forwards`;
-    sc.appendChild(st);
-    setTimeout(()=>st.remove(),dur*1000+100);
-  }
-  function schedule(){setTimeout(()=>{shootStar();schedule();},2000+Math.random()*2500);}
-  schedule();
-  shootStar();
+/* ================= REVEAL / BARS ================= */
+const io=new IntersectionObserver(es=>{
+  es.forEach(e=>{
+    if(!e.isIntersecting)return;
+    e.target.classList.add('in');
+    e.target.querySelectorAll?.('.bbar i').forEach(i=>i.style.width=i.dataset.w+'%');
+    io.unobserve(e.target);
+  });
+},{threshold:.12,rootMargin:'0px 0px -6% 0px'});
+document.querySelectorAll('.rv').forEach(el=>io.observe(el));
 
-  /* ---------- loader ---------- */
-  addEventListener('load',()=>setTimeout(()=>document.getElementById('loader').classList.add('done'),1900));
-  setTimeout(()=>document.getElementById('loader').classList.add('done'),2600);
+/* ================= HEADER / TABS / NAV / FAB ================= */
+const hdr=document.getElementById('hdr'), fab=document.getElementById('fab');
+const tabLinks=[...document.querySelectorAll('#tabs a')];
+const navLinks=[...document.querySelectorAll('#bnav a')];
+const secIds=tabLinks.map(a=>a.getAttribute('href').slice(1));
+const secEls=secIds.map(id=>document.getElementById(id));
+const tabsBar=document.getElementById('tabs');
+
+function centerTab(a){
+  const r=a.getBoundingClientRect(), br=tabsBar.getBoundingClientRect();
+  tabsBar.scrollBy({left:r.left-br.left-(br.width/2-r.width/2),behavior:'smooth'});
+}
+let raf=false;
+function onScroll(){
+  const y=scrollY;
+  hdr.classList.toggle('solid',y>180);
+  fab.classList.toggle('show',y>700);
+  const line=innerHeight*0.32;
+  let act=0;
+  secEls.forEach((el,i)=>{ if(el && el.getBoundingClientRect().top<=line) act=i; });
+  tabLinks.forEach((a,i)=>{
+    const on=i===act;
+    if(on && !a.classList.contains('on')){a.classList.add('on');centerTab(a);}
+    else if(!on)a.classList.remove('on');
+  });
+  const cur=secIds[act];
+  navLinks.forEach(a=>a.classList.toggle('on',
+    a.dataset.sec===cur || (a.dataset.sec==='top' && y<300)));
+  raf=false;
+}
+addEventListener('scroll',()=>{if(!raf){requestAnimationFrame(onScroll);raf=true}},{passive:true});
+onScroll();
+
+fab.addEventListener('click',()=>scrollTo({top:0,behavior:'smooth'}));
+navLinks[0].addEventListener('click',e=>{e.preventDefault();scrollTo({top:0,behavior:'smooth'})});
+
+/* share */
+document.getElementById('shareBtn').addEventListener('click',async()=>{
+  const data={title:'이탈리아 신혼여행 · 구현지 ♥ 박진영',text:'2027.1.16–1.25 · 로마 · 피렌체 · 베니스 · 밀라노',url:location.href};
+  try{
+    if(navigator.share){await navigator.share(data)}
+    else{await navigator.clipboard.writeText(location.href);alert('링크를 복사했어요!')}
+  }catch(e){}
+});
 </script>
 
-<!-- ===== Leaflet map ===== -->
+<!-- ===== Leaflet ===== -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 (function(){
-  if(typeof L==='undefined'){return;}
-  var cities=[
-    {n:'Roma',   k:'로마 · 1.16–19',  c:'#e07a4f', ll:[41.9028,12.4964]},
-    {n:'Firenze',k:'피렌체 · 1.19–21',c:'#e6b23e', ll:[43.7696,11.2558]},
-    {n:'Venezia',k:'베니스 · 1.21–23',c:'#4bb0d1', ll:[45.4408,12.3155]},
-    {n:'Milano', k:'밀라노 · 1.23–24',c:'#d17aa0', ll:[45.4642, 9.1900]}
-  ];
-  var map=L.map('realmap',{scrollWheelZoom:false,zoomControl:true,attributionControl:true});
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{
-    subdomains:'abcd', maxZoom:19,
-    attribution:'&copy; OpenStreetMap &copy; CARTO'
-  }).addTo(map);
-
-  // route line
-  var line=cities.map(function(c){return c.ll;});
-  L.polyline(line,{color:'#f4c542',weight:3,opacity:.85,dashArray:'2 9',lineCap:'round'}).addTo(map);
-
-  // city markers
-  cities.forEach(function(c,i){
-    var icon=L.divIcon({className:'',iconSize:[30,30],iconAnchor:[15,15],
-      html:'<div class="city-pin" style="width:30px;height:30px;background:'+c.c+'">'+(i+1)+'</div>'});
-    L.marker(c.ll,{icon:icon}).addTo(map)
-     .bindPopup('<div class="pop-t">'+c.n+'</div><div class="pop-s">'+c.k+'</div>');
-  });
-
-  var bounds=L.latLngBounds(line);
-  map.fitBounds(bounds,{padding:[50,50]});
-
-  // fix sizing once the section scrolls into view / loads
-  function fix(){ map.invalidateSize(); map.fitBounds(bounds,{padding:[50,50]}); }
-  addEventListener('load',function(){setTimeout(fix,300);});
-  if('IntersectionObserver' in window){
-    var mo=new IntersectionObserver(function(es){
-      es.forEach(function(e){ if(e.isIntersecting){ fix(); mo.disconnect(); } });
-    },{threshold:.15});
-    mo.observe(document.getElementById('realmap'));
+  if(typeof L==='undefined')return;
+  var mq=matchMedia('(prefers-color-scheme: dark)');
+  var map=L.map('realmap',{scrollWheelZoom:false,zoomControl:false,attributionControl:true});
+  L.control.zoom({position:'bottomright'}).addTo(map);
+  var tiles=null;
+  function paint(){
+    var style=mq.matches?'dark_all':'rastertiles/voyager';
+    if(tiles)map.removeLayer(tiles);
+    tiles=L.tileLayer('https://{s}.basemaps.cartocdn.com/'+style+'/{z}/{x}/{y}{r}.png',
+      {subdomains:'abcd',maxZoom:19,attribution:'&copy; OSM &copy; CARTO'}).addTo(map);
+    tiles.bringToBack();
   }
+  paint();
+  mq.addEventListener?.('change',paint);
+  var pts=cities.map(function(c){return c.ll});
+  L.polyline(pts,{color:'#1a5cff',weight:3,opacity:.75,dashArray:'3 8',lineCap:'round'}).addTo(map);
+  cities.forEach(function(c,i){
+    L.marker(c.ll,{icon:L.divIcon({className:'',iconSize:[28,28],iconAnchor:[14,14],
+      html:'<div class="city-pin" style="width:28px;height:28px;background:'+HEX[c.r]+'">'+(i+1)+'</div>'})})
+     .addTo(map).bindPopup('<div class="pop-t">'+c.lat+'</div><div class="pop-s">'+c.ko+' · '+c.dates+' · '+c.nights+'</div>');
+  });
+  var b=L.latLngBounds(pts);
+  function fix(){map.invalidateSize();map.fitBounds(b,{padding:[42,42]})}
+  fix();
+  addEventListener('load',function(){setTimeout(fix,250)});
+  new IntersectionObserver(function(es,o){
+    es.forEach(function(e){if(e.isIntersecting){fix();o.disconnect()}});
+  },{threshold:.15}).observe(document.getElementById('realmap'));
 })();
 </script>
 </body>
